@@ -10,7 +10,8 @@ app.use('/shared', express.static(path.join(__dirname, '..', 'shared')));
 app.get('/health', (req, res) => res.send('ok'));
 
 const server = http.createServer(app);
-const io = new Server(server);
+// Allow any origin so the page can also be hosted elsewhere (e.g. GitHub Pages).
+const io = new Server(server, { cors: { origin: true } });
 
 const manager = {
   io,

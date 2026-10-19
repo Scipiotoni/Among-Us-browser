@@ -40,10 +40,11 @@ Then open http://localhost:3000. To test alone, open several browser windows; a 
 
 Your friends need to reach your server. The options, easiest first:
 
-1. **Deploy for free on Render** (recommended). Push this repo to GitHub, then on [render.com](https://render.com) choose *New → Blueprint* and pick the repo. The included `render.yaml` sets everything up. Share the URL you get.
+1. **GitHub Pages + Render** (current setup). The page is published to GitHub Pages by `.github/workflows/pages.yml` on every push, and it connects to the game server on Render (`https://sus-station.onrender.com`). To use a different server, set a repository variable `SERVER_URL` (Settings → Secrets and variables → Actions → Variables). The server itself can't run on GitHub Pages, because Pages only hosts static files.
+2. **Render only.** Push this repo to GitHub, then on [render.com](https://render.com) choose *New → Blueprint* and pick the repo. The included `render.yaml` sets everything up. Share the URL you get.
    - Other Node hosts that support WebSockets (Railway, Fly.io, Glitch, a VPS) also work: run `npm install` and `npm start`, and the server listens on `$PORT`.
-2. **Same Wi-Fi / LAN:** run `npm start` and have friends open `http://<your-local-ip>:3000`.
-3. **Tunnel from your PC:** run `npm start`, then something like `npx localtunnel --port 3000` or `cloudflared tunnel --url http://localhost:3000`, and share the public link.
+3. **Same Wi-Fi / LAN:** run `npm start` and have friends open `http://<your-local-ip>:3000`.
+4. **Tunnel from your PC:** run `npm start`, then something like `npx localtunnel --port 3000` or `cloudflared tunnel --url http://localhost:3000`, and share the public link.
 
 Click **🔗 Invite** in the lobby to copy a link that pre-fills your lobby code.
 

@@ -20,7 +20,8 @@ const App = (() => {
   }
 
   const App = {
-    socket: io(),
+    // SERVER_URL is empty when the page is served by the game server itself (see js/config.js).
+    socket: window.SERVER_URL ? io(window.SERVER_URL) : io(),
     profile: loadProfile(),
     room: null,
     myId: null,
@@ -152,6 +153,8 @@ const App = (() => {
     const code = new URLSearchParams(location.search).get('code');
     if (code) $('code-input').value = code.toUpperCase();
     showScreen('menu');
+    // A sleeping free-tier server can take a while to answer; let players know.
+    setTimeout(() => { if (!s.connected) $('conn-status').classList.remove('hidden'); }, 1500);
   });
 
   return App;

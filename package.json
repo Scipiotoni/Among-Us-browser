@@ -4,7 +4,8 @@
   "description": "Browser-based multiplayer social deduction game",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "build:pages": "node scripts/build-pages.js"
   },
   "repository": {
     "type": "git",

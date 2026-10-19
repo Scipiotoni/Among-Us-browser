@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="conn-status" class="hidden">Connecting to server…</div>
+  <div id="conn-status" class="hidden">Connecting to the game server… (if it was asleep this can take up to a minute)</div>
 
   <!-- ============================== MENU -->
   <section id="screen-menu" class="screen">
@@ -231,9 +231,10 @@
 
   <div id="toasts"></div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/shared/constants.js"></script>
-  <script src="/shared/map.js"></script>
+  <script src="js/config.js"></script>
+  <script src="socket.io/socket.io.js"></script>
+  <script src="shared/constants.js"></script>
+  <script src="shared/map.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/draw.js"></script>
   <script src="js/world.js"></script>
