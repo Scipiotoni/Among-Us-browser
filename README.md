@@ -4,6 +4,8 @@ A free, browser-based multiplayer social deduction game to play with friends. Cr
 
 No downloads for players: one person hosts the server and everyone else just opens a link.
 
+**▶ Play: https://scipiotoni.github.io/Among-Us-browser/**
+
 > This is an original fan project inspired by the social deduction genre. All art (characters, map, UI) is drawn in code and all sounds are synthesized. It contains no official assets and isn't affiliated with any commercial game.
 
 ## Features
