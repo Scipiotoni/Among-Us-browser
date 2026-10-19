@@ -1,0 +1,26 @@
+{
+  "name": "sus-station",
+  "version": "1.0.0",
+  "description": "Browser-based multiplayer social deduction game",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Scipiotoni/Among-Us-browser.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Scipiotoni/Among-Us-browser/issues"
+  },
+  "homepage": "https://github.com/Scipiotoni/Among-Us-browser#readme",
+  "dependencies": {
+    "express": "^4.22.3",
+    "socket.io": "^4.8.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true
+}
