@@ -1,3 +1,4 @@
-// Address of the game server. Leave empty when the page is served by the game server itself.
-// The GitHub Pages build (scripts/build-pages.js) overwrites this with the hosted server's URL.
-window.SERVER_URL = '';
+// Optional: list your own MQTT-over-WebSocket brokers to use instead of the free public ones,
+// e.g. window.MQTT_BROKERS = ['wss://my-broker.example.com:8084/mqtt'];
+// Adding ?mqtt=wss://… to the page URL also works.
+window.MQTT_BROKERS = window.MQTT_BROKERS || null;

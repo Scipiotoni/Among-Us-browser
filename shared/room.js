@@ -1,8 +1,18 @@
-const C = require('../shared/constants');
-const { MAPS, TASKS } = require('../shared/map');
-const { COSMETIC_BY_ID, COSMETIC_DEFAULTS, REWARDS } = require('../shared/cosmetics');
+// Authoritative game logic for one lobby. It runs in the lobby creator's browser (see public/js/net.js),
+// and also loads under Node for tests. `manager` provides io.to(code).emit, deleteRoom and every(ms, fn).
+(function (root, factory) {
+  const node = typeof module === 'object' && module.exports;
+  const shared = node
+    ? Object.assign({}, require('./constants.js'), require('./map.js'), require('./cosmetics.js'))
+    : root.SHARED;
+  const mod = factory(shared);
+  if (node) module.exports = mod;
+  else root.RoomLogic = mod;
+})(typeof self !== 'undefined' ? self : globalThis, function (C) {
+const { MAPS, TASKS, COSMETIC_BY_ID, COSMETIC_DEFAULTS, REWARDS } = C;
 
 const TICK_MS = 50;
+const SNAP_EVERY = 2; // broadcast positions every 2nd tick (10 per second)
 const now = () => Date.now();
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -38,10 +48,11 @@ class Room {
     this.game = null;
     this.map = MAPS.lobby;
     this.nextId = 1;
-    this.interval = setInterval(() => this.tick(), TICK_MS);
+    this.ticks = 0;
+    this.stopTicking = manager.every ? manager.every(TICK_MS, () => this.tick()) : ((iv) => () => clearInterval(iv))(setInterval(() => this.tick(), TICK_MS));
   }
 
-  destroy() { clearInterval(this.interval); if (this.game && this.game.endTimer) clearTimeout(this.game.endTimer); }
+  destroy() { this.stopTicking(); if (this.game && this.game.endTimer) clearTimeout(this.game.endTimer); }
 
   // ------------------------------------------------------------------ helpers
   emitAll(ev, data) { this.io.to(this.code).emit(ev, data); }
@@ -230,14 +241,6 @@ class Room {
       case 'demote':
         if (!isHost) return;
         this.admins.delete(t.id); this.sys(`${t.name} is no longer an admin.`); this.broadcastState(); break;
-      case 'transfer':
-        if (!isHost) return;
-        this.admins.delete(t.id);
-        this.admins.add(p.id);
-        this.hostId = t.id;
-        this.sys(`${t.name} is now the host.`);
-        this.broadcastState();
-        break;
     }
   }
 
@@ -808,51 +811,43 @@ class Room {
         }
       }
     }
-    if (this.phase === 'lobby' || this.phase === 'playing') this.sendSnapshots(t);
+    if ((this.phase === 'lobby' || this.phase === 'playing') && ++this.ticks % SNAP_EVERY === 0) this.sendSnapshots(t);
   }
 
+  // One snapshot for everybody; each browser hides what its player shouldn't see (see Game.onSnap).
   sendSnapshots(t) {
     const g = this.game;
-    const all = [...this.players.values()];
     const S = this.settings;
-    let shared = { t, phase: this.phase };
+    const snap = { t, phase: this.phase, players: [] };
+    for (const p of this.players.values()) {
+      const e = { id: p.id, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, m: p.moving ? 1 : 0 };
+      if (g) {
+        e.a = p.alive ? 1 : 0;
+        if (p.inVent) e.v = 1;
+        if (p.shiftInto) e.s = p.shiftInto;
+        if (p.invisibleUntil > t) e.inv = 1;
+        if (p.scanning && S.visualTasks) e.sc = 1;
+        if (p.protectedUntil > t) e.pb = p.protectedBy;
+      }
+      snap.players.push(e);
+    }
     if (g && this.phase === 'playing') {
       const s = g.sabotage;
-      shared.sab = s ? {
+      snap.sab = s ? {
         type: s.type, left: s.endsAt ? s.endsAt - t : null,
         held: s.held ? { reactorA: !!s.held.reactorA, reactorB: !!s.held.reactorB } : undefined,
         fixed: s.fixed, code: s.code,
       } : null;
-      shared.doors = Object.keys(g.doors);
-      shared.bodies = g.bodies.map((b) => ({ id: b.id, x: b.x, y: b.y, color: b.color, victimId: b.victimId, d: b.dissolveAt ? Math.max(0, b.dissolveAt - t) : 0 }));
+      snap.doors = Object.keys(g.doors);
+      snap.bodies = g.bodies.map((b) => ({ id: b.id, x: b.x, y: b.y, color: b.color, victimId: b.victimId, d: b.dissolveAt ? Math.max(0, b.dissolveAt - t) : 0 }));
       const prog = S.taskBarUpdates === 0 ? g.tasksDone : S.taskBarUpdates === 1 ? g.progressShown : null;
-      shared.progress = s && s.type === 'comms' ? null : (prog === null ? null : (g.tasksTotal ? prog / g.tasksTotal : 0));
-      shared.emergencyCd = Math.max(0, g.emergencyCooldownEnd - t);
-      shared.sabCd = Math.max(0, g.sabotageCooldownEnd - t);
-      shared.doorCd = {};
-      for (const r in g.doorCooldown) if (g.doorCooldown[r] > t) shared.doorCd[r] = g.doorCooldown[r] - t;
-    }
-    for (const r of all) {
-      const rIsGhost = g && !r.alive;
-      const players = [];
-      for (const p of all) {
-        if (g && p.id !== r.id) {
-          if (!p.alive && !rIsGhost) continue;
-          if (p.inVent) continue;
-          if (p.invisibleUntil > t && r.team !== 'impostor' && !rIsGhost) continue;
-        }
-        const e = { id: p.id, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, m: p.moving ? 1 : 0 };
-        if (g) {
-          e.a = p.alive ? 1 : 0;
-          if (p.shiftInto) e.s = p.shiftInto;
-          if (p.invisibleUntil > t) e.inv = 1;
-          if (p.scanning && S.visualTasks) e.sc = 1;
-          if (p.protectedUntil > t && (r.id === p.id || r.id === p.protectedBy || rIsGhost)) e.sh = 1;
-        }
-        players.push(e);
-      }
-      const snap = { ...shared, players };
-      if (g && this.phase === 'playing') {
+      snap.progress = s && s.type === 'comms' ? null : (prog === null ? null : (g.tasksTotal ? prog / g.tasksTotal : 0));
+      snap.emergencyCd = Math.max(0, g.emergencyCooldownEnd - t);
+      snap.sabCd = Math.max(0, g.sabotageCooldownEnd - t);
+      snap.doorCd = {};
+      for (const r in g.doorCooldown) if (g.doorCooldown[r] > t) snap.doorCd[r] = g.doorCooldown[r] - t;
+      snap.mes = {};
+      for (const r of this.players.values()) {
         const me = {
           kill: Math.max(0, r.killCooldownEnd - t), ability: Math.max(0, r.abilityCooldownEnd - t),
           vent: Math.max(0, r.ventCooldownEnd - t), inVent: r.inVent, emergencies: r.emergencyLeft,
@@ -865,11 +860,12 @@ class Room {
           if (tq && tq.alive) me.track = { x: Math.round(tq.x), y: Math.round(tq.y), name: tq.name, left: r.trackUntil - t };
         }
         if (r.vitalsUntil > t) { me.vitals = this.vitals(); me.vitalsLeft = r.vitalsUntil - t; }
-        snap.me = me;
+        snap.mes[r.id] = me;
       }
-      r.socket.emit('snap', snap);
     }
+    this.emitAll('snap', snap);
   }
 }
 
-module.exports = { Room };
+return { Room };
+});

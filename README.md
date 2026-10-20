@@ -28,26 +28,26 @@ No downloads for players: one person hosts the server and everyone else just ope
 - **All the usual game settings:** kill cooldown and distance, vision, speed, task counts, task bar mode, meeting rules, max players, and more
 - **Mobile friendly:** touch joystick and big action buttons
 
+## How it works (no server!)
+
+There is no game server to keep running, so there's no waiting for one to wake up. Like Casino-simulator, multiplayer goes through a free public **MQTT broker** over secure WebSockets (`broker.emqx.io`, with `broker.hivemq.com` as a fallback). The browser of whoever **creates a lobby runs the game** for that lobby; everyone else sends their moves to it and gets the game state back. The site itself is just static files on GitHub Pages.
+
+- **Accounts:** sign up with a username and password to keep cookies, purchases and your look on every device. Each account is saved, encrypted with a key made from the password, as a retained message on both brokers (and cached on each device that logs in). The newest copy wins, and missing copies are rewritten automatically. Guests keep cookies in their browser only.
+- **Trade-offs:** the lobby closes if the host leaves or loses connection, so the host should keep the game open (a background tab is fine). Public brokers are open to anyone and promise no uptime; a determined player could read game messages or edit their own cookies with developer tools. Some school or office networks block the broker's port (8084/8884). Don't reuse an important password for your account.
+- **Own broker:** add `?mqtt=wss://your-broker/mqtt` to the page URL, or set `window.MQTT_BROKERS` in `public/js/config.js`.
+
 ## Run it
 
-Requires Node.js 18+.
+Play at **https://scipiotoni.github.io/Among-Us-browser/**. Every push to `main` republishes it (`.github/workflows/pages.yml`).
+
+To run it on your computer (Node.js 18+):
 
 ```bash
 npm install
 npm start
 ```
 
-Then open http://localhost:3000. To test alone, open several browser windows; a solo game gives you a crewmate with no impostors, so you can try the tasks.
-
-### Playing with friends
-
-Your friends need to reach your server. The options, easiest first:
-
-1. **GitHub Pages + Render** (current setup). The page is published to GitHub Pages by `.github/workflows/pages.yml` on every push, and it connects to the game server on Render (`https://sus-station.onrender.com`). To use a different server, set a repository variable `SERVER_URL` (Settings → Secrets and variables → Actions → Variables). The server itself can't run on GitHub Pages, because Pages only hosts static files.
-2. **Render only.** Push this repo to GitHub, then on [render.com](https://render.com) choose *New → Blueprint* and pick the repo. The included `render.yaml` sets everything up. Share the URL you get.
-   - Other Node hosts that support WebSockets (Railway, Fly.io, Glitch, a VPS) also work: run `npm install` and `npm start`, and the server listens on `$PORT`.
-3. **Same Wi-Fi / LAN:** run `npm start` and have friends open `http://<your-local-ip>:3000`.
-4. **Tunnel from your PC:** run `npm start`, then something like `npx localtunnel --port 3000` or `cloudflared tunnel --url http://localhost:3000`, and share the public link.
+Then open http://localhost:3000. It still uses the public brokers for multiplayer, so friends on the Pages site and on your local copy can play together. To test alone, open several browser windows; a solo game gives you a crewmate with no impostors, so you can try the tasks.
 
 Click **🔗 Invite** in the lobby to copy a link that pre-fills your lobby code.
 
@@ -68,9 +68,9 @@ Click **🔗 Invite** in the lobby to copy a link that pre-fills your lobby code
 ## Project layout
 
 ```
-server/index.js     Express + Socket.IO entry point
-server/room.js      Authoritative game logic (lobby, roles, kills, meetings, sabotage, win checks)
-shared/constants.js Colors, roles, settings schema (used by server + browser)
+server/index.js     Local static file server (the game needs no server)
+shared/room.js      Authoritative game logic, run by the lobby host's browser (lobby, roles, kills, meetings, sabotage, win checks)
+shared/constants.js Colors, roles, settings schema
 shared/cosmetics.js Cosmetics catalog with cookie prices, and reward amounts
 shared/map.js       Map geometry, vents, stations, tasks, collision / line-of-sight helpers
 public/js/draw.js   Character, cosmetics and pet rendering
@@ -78,5 +78,8 @@ public/js/world.js  Map pre-render and field-of-view
 public/js/game.js   Client engine: movement, rendering, interactions, HUD, map, cameras
 public/js/tasks.js  Task minigames and sabotage repair panels
 public/js/ui.js     Menus, wardrobe, settings, admin panel, chat, meetings, overlays
-public/js/main.js   Socket wiring and bootstrap
+public/js/mqtt.js   Tiny MQTT client + background-safe timers
+public/js/net.js    Serverless multiplayer: hosting and joining lobbies over MQTT
+public/js/accounts.js Accounts (encrypted cloud saves) and the cookie wallet
+public/js/main.js   Event wiring and bootstrap
 ```

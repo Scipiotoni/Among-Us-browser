@@ -143,20 +143,30 @@ const Game = (() => {
   function onSnap(s) {
     const t = performance.now();
     const seen = new Set();
+    const inGame = S.mode === 'game' && s.phase !== 'lobby';
+    const ghost = inGame && !S.alive;
     for (const e of s.players) {
-      seen.add(e.id);
       if (e.id === S.meId) {
-        S.selfShift = e.s || null; S.selfInv = !!e.inv; S.selfShield = !!e.sh;
-        if (S.mode === 'game' && e.a === 0 && S.alive) S.alive = false;
+        seen.add(e.id);
+        S.selfShift = e.s || null; S.selfInv = !!e.inv; S.selfShield = !!e.pb;
+        if (inGame && e.a === 0 && S.alive) S.alive = false;
         continue;
       }
+      // The host sends everyone the same snapshot; hide what this player shouldn't see.
+      if (inGame) {
+        if (e.a === 0 && !ghost) continue;
+        if (e.v) continue;
+        if (e.inv && S.team !== 'impostor' && !ghost) continue;
+      }
+      seen.add(e.id);
       let p = S.players.get(e.id);
-      if (!p || t - p.seenAt > 300) {
+      if (!p || t - p.seenAt > 400) {
         p = p || { id: e.id, phase: Math.random() * 10 };
         p.rx = e.x; p.ry = e.y;
         S.players.set(e.id, p);
       }
-      Object.assign(p, { x: e.x, y: e.y, dir: e.d, moving: !!e.m, alive: e.a !== 0, shift: e.s || null, inv: !!e.inv, sc: !!e.sc, sh: !!e.sh, seenAt: t });
+      const sh = !!e.pb && (e.pb === S.meId || ghost);
+      Object.assign(p, { x: e.x, y: e.y, dir: e.d, moving: !!e.m, alive: e.a !== 0, shift: e.s || null, inv: !!e.inv, sc: !!e.sc, sh, seenAt: t });
     }
     for (const id of [...S.players.keys()]) if (!seen.has(id)) S.players.delete(id);
     if (S.mode !== 'game') return;
@@ -165,7 +175,7 @@ const Game = (() => {
     S.sab = s.sab || null;
     S.doors = s.doors || [];
     S.progress = s.progress;
-    S.info = s.me || {};
+    S.info = (s.mes && s.mes[S.meId]) || {};
     S.emergencyCd = s.emergencyCd || 0;
     S.sabCd = s.sabCd || 0;
     S.doorCd = s.doorCd || {};
@@ -276,7 +286,7 @@ const Game = (() => {
       if (Math.abs(vx) > 0.1) me.dir = vx > 0 ? 1 : -1;
     }
     const now = performance.now();
-    if (now - S.lastSend > 50) {
+    if (now - S.lastSend > 80) {
       const msg = { x: Math.round(me.x), y: Math.round(me.y), dir: me.dir, moving: me.moving };
       const l = S.lastSent;
       if (!l || l.x !== msg.x || l.y !== msg.y || l.moving !== msg.moving || l.dir !== msg.dir || now - S.lastSend > 1000) {
@@ -286,7 +296,7 @@ const Game = (() => {
       }
     }
     for (const p of S.players.values()) {
-      const k = Math.min(1, dt * 14);
+      const k = Math.min(1, dt * 11);
       p.rx += (p.x - p.rx) * k;
       p.ry += (p.y - p.ry) * k;
       p.phase += dt;

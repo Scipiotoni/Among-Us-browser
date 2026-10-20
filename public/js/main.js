@@ -1,35 +1,3 @@
-// Cookie wallet: balance and owned cosmetics, stored in this browser.
-const Wallet = (() => {
-  const KEY = 'bi_wallet';
-  let data = null;
-  const listeners = [];
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} listeners.forEach((f) => f()); };
-  return {
-    // Players keep whatever they were already wearing before the shop existed.
-    load(profile) {
-      try { data = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-      if (!data || typeof data.cookies !== 'number' || !Array.isArray(data.owned)) {
-        data = { cookies: SHARED.REWARDS.starting, owned: [] };
-        for (const cat in SHARED.COSMETIC_DEFAULTS) if (profile[cat]) data.owned.push(`${cat}:${profile[cat]}`);
-        save();
-      }
-    },
-    get cookies() { return data.cookies; },
-    price(cat, id) { const it = SHARED.COSMETIC_BY_ID[cat] && SHARED.COSMETIC_BY_ID[cat][id]; return it ? it.price : 0; },
-    owns(cat, id) { return cat === 'color' || this.price(cat, id) === 0 || data.owned.includes(`${cat}:${id}`); },
-    buy(cat, id) {
-      const price = this.price(cat, id);
-      if (this.owns(cat, id) || data.cookies < price) return false;
-      data.cookies -= price;
-      data.owned.push(`${cat}:${id}`);
-      save();
-      return true;
-    },
-    add(n) { if (n > 0) { data.cookies += n; save(); } },
-    onChange(f) { listeners.push(f); },
-  };
-})();
-
 // App bootstrap: profile storage, socket wiring, screen switching.
 const App = (() => {
   const $ = (id) => document.getElementById(id);
@@ -50,8 +18,7 @@ const App = (() => {
   }
 
   const App = {
-    // SERVER_URL is empty when the page is served by the game server itself (see js/config.js).
-    socket: window.SERVER_URL ? io(window.SERVER_URL) : io(),
+    socket: Net,
     profile: loadProfile(),
     room: null,
     myId: null,
@@ -59,10 +26,21 @@ const App = (() => {
     setProfile(patch) {
       Object.assign(this.profile, patch);
       try { localStorage.setItem('sus_profile', JSON.stringify(this.profile)); } catch (e) {}
+      Wallet.setProfile({ ...this.profile });
       if (this.room && this.room.phase === 'lobby') {
         clearTimeout(this._pt);
         this._pt = setTimeout(() => this.socket.emit('profile', this.profile), 150);
       }
+    },
+    // A profile saved in the account (from another device) replaces this browser's look.
+    applyAccountProfile(prof) {
+      const clean = { name: String(prof.name || this.profile.name || '').slice(0, C.MAX_NAME) };
+      if (C.COLORS.some((c) => c.id === prof.color)) clean.color = prof.color;
+      for (const cat in C.COSMETIC_DEFAULTS) if (C.COSMETIC_BY_ID[cat][prof[cat]]) clean[cat] = prof[cat];
+      Object.assign(this.profile, clean);
+      try { localStorage.setItem('sus_profile', JSON.stringify(this.profile)); } catch (e) {}
+      if ($('name-input')) $('name-input').value = this.profile.name;
+      if (this.room && this.room.phase === 'lobby') this.socket.emit('profile', this.profile);
     },
     create() {
       if (!this.checkName()) return;
@@ -115,10 +93,9 @@ const App = (() => {
   // ------------------------------------------------------------------ socket events
   const s = App.socket;
   s.on('connect', () => $('conn-status').classList.add('hidden'));
-  s.on('disconnect', () => {
-    $('conn-status').classList.remove('hidden');
-    if (App.room) { UI.toast('Disconnected from server.', 'bad'); App.toMenu(); }
-  });
+  // The relay reconnects by itself; the lobby only closes if the host stays unreachable.
+  s.on('disconnect', () => $('conn-status').classList.remove('hidden'));
+  s.on('hb', () => {});
   s.on('roomState', (r) => {
     const prevPhase = App.room && App.room.phase;
     App.room = r;
@@ -182,7 +159,10 @@ const App = (() => {
 
   // ------------------------------------------------------------------ boot
   Wallet.load(App.profile);
+  Net.start();
   window.addEventListener('DOMContentLoaded', () => {
+    Accounts.onChange(() => UI.renderAccount());
+    Accounts.restore();
     const showCookies = () => document.querySelectorAll('.cookie-count').forEach((e) => (e.textContent = Wallet.cookies));
     Wallet.onChange(showCookies);
     showCookies();

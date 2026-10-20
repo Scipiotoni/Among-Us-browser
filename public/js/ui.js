@@ -4,7 +4,7 @@ const UI = (() => {
   const $ = (id) => document.getElementById(id);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const MODALS = ['modal-customize', 'modal-settings', 'modal-players', 'modal-picker', 'modal-clue', 'modal-help'];
+  const MODALS = ['modal-account', 'modal-customize', 'modal-settings', 'modal-players', 'modal-picker', 'modal-clue', 'modal-help'];
 
   function portraitCanvas(prof, size = 64, opts) {
     const c = el('canvas', 'portrait');
@@ -45,12 +45,61 @@ const UI = (() => {
     $('code-input').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, ''); });
     $('btn-browse').onclick = () => browse();
     $('btn-help').onclick = () => openModal('modal-help');
+    initAccount();
     const pv = $('menu-preview');
     const loop = (t) => {
       if (!$('screen-menu').classList.contains('hidden')) Draw.portrait(pv, App.profile, { phase: t / 1000, pet: true });
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
+  }
+
+  // ------------------------------------------------------------------ accounts
+  let acctMode = 'login';
+  function renderAccount() {
+    const bar = $('account-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    if (Accounts.user) {
+      bar.appendChild(el('span', 'acct-who', `👤 <b>${esc(Accounts.user)}</b> <small>· saved to your account</small>`));
+      const out = el('button', 'btn ghost small', 'Log out');
+      out.onclick = () => { if (confirm('Log out? Your cookies stay saved in your account.')) Accounts.logout(); };
+      bar.appendChild(out);
+    } else {
+      bar.appendChild(el('span', 'acct-who', '👤 Guest <small>· cookies saved on this device only</small>'));
+      const b = el('button', 'btn small', 'Log in / Sign up');
+      b.onclick = () => openAccount('login');
+      bar.appendChild(b);
+    }
+  }
+  function openAccount(mode) {
+    acctMode = mode;
+    document.querySelectorAll('.acct-tab').forEach((t) => {
+      t.classList.toggle('active', t.dataset.mode === mode);
+      t.onclick = () => openAccount(t.dataset.mode);
+    });
+    $('acct-title').textContent = mode === 'login' ? 'Log in' : 'Create account';
+    $('acct-submit').textContent = mode === 'login' ? 'Log in' : 'Create account';
+    $('acct-pass').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+    $('acct-status').textContent = '';
+    openModal('modal-account');
+    $('acct-user').focus();
+  }
+  function initAccount() {
+    $('acct-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = $('acct-submit');
+      btn.disabled = true;
+      $('acct-status').textContent = acctMode === 'login' ? 'Logging in…' : 'Creating your account…';
+      const res = await (acctMode === 'login' ? Accounts.login : Accounts.signup)($('acct-user').value, $('acct-pass').value);
+      btn.disabled = false;
+      if (res.error) { $('acct-status').textContent = res.error; Sfx.bad(); return; }
+      $('acct-pass').value = '';
+      closeModal('modal-account');
+      toast(acctMode === 'login' ? `Welcome back, ${Accounts.user}!` : `Account created. Welcome, ${Accounts.user}!`, 'good');
+      Sfx.good();
+    };
+    renderAccount();
   }
 
   function browse() {
@@ -257,7 +306,6 @@ const UI = (() => {
       }
       if (p.id !== me && isHost) {
         act(isA ? 'Remove admin' : 'Make admin', isA ? 'demote' : 'promote');
-        act('Make host', 'transfer');
       }
       row.appendChild(acts);
       box.appendChild(row);
@@ -603,7 +651,7 @@ const UI = (() => {
   }
 
   return {
-    toast, initMenu, initLobby, openCustomize, openSettings, renderLobby, renderPlayers, addChat, clearChat, toggleChat,
+    toast, initMenu, renderAccount, initLobby, openCustomize, openSettings, renderLobby, renderPlayers, addChat, clearChat, toggleChat,
     focusChat, updateChatAvailability, roleReveal, killScreen, meetingStart, meetingStage, onVoted, voteResults, eject,
     meetingEnd, gameOver, hideGameOver, openPicker, showClue, vitalsList, closeModals, modalOpen, portraitCanvas,
   };

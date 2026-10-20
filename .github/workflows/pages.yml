@@ -27,9 +27,6 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run build:pages
-        env:
-          # Optional: set a repository variable SERVER_URL to point at a different game server.
-          SERVER_URL: ${{ vars.SERVER_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
