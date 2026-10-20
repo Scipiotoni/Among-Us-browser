@@ -337,3 +337,26 @@ input:focus { border-color: var(--accent); }
 /* effects */
 body.flash::after { content: ''; position: fixed; inset: 0; background: rgba(255,0,0,.4); z-index: 300; pointer-events: none; }
 body.crit #hud-top-left #task-list { border: 2px solid var(--bad); }
+
+/* ===================== COOKIES + SHOP */
+.cookie-pill { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(180deg, #7a4a1e, #5a3412); border: 2px solid #c98b45; color: #ffe2b8; border-radius: 999px; padding: 4px 12px; font-weight: bold; font-size: 15px; white-space: nowrap; }
+.cookie-pill b { color: #fff; }
+#hud-top-right .cookie-pill { height: 44px; }
+.modal-head .cookie-pill { margin-left: auto; margin-right: 10px; font-size: 14px; }
+.cz-filters { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.cz-filter { background: #0d1222; color: var(--muted); border: 2px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: bold; }
+.cz-filter.active { color: #fff; border-color: var(--accent); }
+#cz-owned-count { margin-left: auto; }
+.cz-item { position: relative; }
+.cz-price { font-size: 11px; font-weight: bold; margin-top: 2px; color: #ffcf8a; }
+.cz-price.free { color: var(--good); }
+.cz-price.owned { color: var(--accent); }
+.cz-item.locked canvas { filter: saturate(.55) brightness(.8); }
+.cz-item.previewing { border-color: #c98b45; box-shadow: 0 0 12px rgba(201,139,69,.7); }
+#cz-buy-box { display: flex; flex-direction: column; align-items: center; gap: 6px; background: #0d1222; border: 2px solid #c98b45; border-radius: 12px; padding: 10px; width: 100%; }
+#cz-buy-box .btn.primary { background: linear-gradient(180deg, #e0a35a, #a8661f); border-color: #ffcf8a; }
+.cz-earn { text-align: center; font-size: 12px; }
+.go-cookies { margin-top: 18px; background: rgba(90,52,18,.85); border: 2px solid #c98b45; border-radius: 16px; padding: 12px 24px; text-align: center; animation: zoom .5s; }
+.gc-total { font-size: 40px; font-weight: bold; color: #ffe2b8; }
+.gc-parts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; color: #ffcf8a; font-size: 15px; }
+.gc-bal { margin-top: 6px; color: #fff; font-size: 14px; }

@@ -1,3 +1,35 @@
+// Cookie wallet: balance and owned cosmetics, stored in this browser.
+const Wallet = (() => {
+  const KEY = 'bi_wallet';
+  let data = null;
+  const listeners = [];
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} listeners.forEach((f) => f()); };
+  return {
+    // Players keep whatever they were already wearing before the shop existed.
+    load(profile) {
+      try { data = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+      if (!data || typeof data.cookies !== 'number' || !Array.isArray(data.owned)) {
+        data = { cookies: SHARED.REWARDS.starting, owned: [] };
+        for (const cat in SHARED.COSMETIC_DEFAULTS) if (profile[cat]) data.owned.push(`${cat}:${profile[cat]}`);
+        save();
+      }
+    },
+    get cookies() { return data.cookies; },
+    price(cat, id) { const it = SHARED.COSMETIC_BY_ID[cat] && SHARED.COSMETIC_BY_ID[cat][id]; return it ? it.price : 0; },
+    owns(cat, id) { return cat === 'color' || this.price(cat, id) === 0 || data.owned.includes(`${cat}:${id}`); },
+    buy(cat, id) {
+      const price = this.price(cat, id);
+      if (this.owns(cat, id) || data.cookies < price) return false;
+      data.cookies -= price;
+      data.owned.push(`${cat}:${id}`);
+      save();
+      return true;
+    },
+    add(n) { if (n > 0) { data.cookies += n; save(); } },
+    onChange(f) { listeners.push(f); },
+  };
+})();
+
 // App bootstrap: profile storage, socket wiring, screen switching.
 const App = (() => {
   const $ = (id) => document.getElementById(id);
@@ -6,11 +38,9 @@ const App = (() => {
   function loadProfile() {
     let p = {};
     try { p = JSON.parse(localStorage.getItem('sus_profile') || '{}'); } catch (e) {}
-    return {
-      name: p.name || '',
-      color: p.color || C.COLORS[Math.floor(Math.random() * C.COLORS.length)].id,
-      hat: p.hat || 'none', eyes: p.eyes || 'normal', outfit: p.outfit || 'none', pet: p.pet || 'none',
-    };
+    const prof = { name: p.name || '', color: p.color || C.COLORS[Math.floor(Math.random() * C.COLORS.length)].id };
+    for (const cat in C.COSMETIC_DEFAULTS) prof[cat] = C.COSMETIC_BY_ID[cat][p[cat]] ? p[cat] : C.COSMETIC_DEFAULTS[cat];
+    return prof;
   }
   function clientId() {
     let id = null;
@@ -137,7 +167,12 @@ const App = (() => {
   s.on('eject', (d) => UI.eject(d));
   s.on('meetingEnd', (d) => { UI.meetingEnd(); Game.meetingEnded(d.positions); });
   s.on('playerLeft', () => {});
-  s.on('gameOver', (d) => { Game.setFrozen(true); Game.closeMap(); Game.closeConsole(); Tasks.close(); UI.gameOver(d); });
+  s.on('gameOver', (d) => {
+    Game.setFrozen(true); Game.closeMap(); Game.closeConsole(); Tasks.close();
+    const mine = d.rewards && d.rewards[App.myId];
+    if (mine) Wallet.add(mine.total);
+    UI.gameOver(d, mine);
+  });
   s.on('backToLobby', () => {
     UI.hideGameOver();
     document.querySelectorAll('.overlay').forEach((o) => o.classList.add('hidden'));
@@ -146,7 +181,11 @@ const App = (() => {
   });
 
   // ------------------------------------------------------------------ boot
+  Wallet.load(App.profile);
   window.addEventListener('DOMContentLoaded', () => {
+    const showCookies = () => document.querySelectorAll('.cookie-count').forEach((e) => (e.textContent = Wallet.cookies));
+    Wallet.onChange(showCookies);
+    showCookies();
     Game.init();
     UI.initMenu();
     UI.initLobby();

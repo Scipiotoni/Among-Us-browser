@@ -818,7 +818,7 @@ const Game = (() => {
     const inGame = S.mode === 'game';
     const n = S.near;
     const u = n.use;
-    const useLabel = !u ? 'Use' : u.kind === 'console' ? ({ emergency: 'Meeting', cams: 'Cams', admin: 'Admin', vitals: 'Vitals', wardrobe: 'Wardrobe', settings: 'Settings' }[u.console] || 'Use') : u.kind === 'fix' ? 'Fix' : 'Use';
+    const useLabel = !u ? 'Use' : u.kind === 'console' ? ({ emergency: 'Meeting', cams: 'Cams', admin: 'Admin', vitals: 'Vitals', wardrobe: 'Shop', settings: 'Settings' }[u.console] || 'Use') : u.kind === 'fix' ? 'Fix' : 'Use';
     setBtn('act-use', S.mode !== 'menu', !!u && !(u.fake), useLabel);
     const imp = inGame && S.team === 'impostor';
     setBtn('act-kill', imp && S.alive, !!n.kill && (S.info.kill || 0) <= 0, 'Kill', S.info.kill);

@@ -69,21 +69,37 @@ const UI = (() => {
     });
   }
 
-  // ------------------------------------------------------------------ wardrobe
-  let czTab = 'color';
+  // ------------------------------------------------------------------ wardrobe + shop
+  let czTab = 'color', czFilter = 'all', czPreview = null; // czPreview: { cat, id } of a locked item being tried on
   function openCustomize() {
     openModal('modal-customize');
+    czPreview = null;
     $('cz-name').value = App.profile.name || '';
     $('cz-name').oninput = (e) => { App.setProfile({ name: e.target.value }); $('name-input').value = e.target.value; };
     document.querySelectorAll('.cz-tab').forEach((b) => {
-      b.classList.toggle('active', b.dataset.tab === czTab);
-      b.onclick = () => { czTab = b.dataset.tab; openCustomize(); };
+      b.onclick = () => { czTab = b.dataset.tab; czPreview = null; renderCzGrid(); };
     });
+    document.querySelectorAll('.cz-filter').forEach((b) => {
+      b.onclick = () => { czFilter = b.dataset.filter; renderCzGrid(); };
+    });
+    $('cz-cancel').onclick = () => { czPreview = null; renderCzGrid(); };
+    $('cz-buy').onclick = () => {
+      if (!czPreview) return;
+      const { cat, id } = czPreview;
+      if (Wallet.buy(cat, id)) {
+        Sfx.good();
+        App.setProfile({ [cat]: id });
+        toast(`Bought ${SHARED.COSMETIC_BY_ID[cat][id].name}!`, 'good');
+        czPreview = null;
+      } else Sfx.bad();
+      renderCzGrid();
+    };
     renderCzGrid();
     const pv = $('cz-preview');
     const loop = (t) => {
       if ($('modal-customize').classList.contains('hidden')) return;
-      Draw.portrait(pv, App.profile, { phase: t / 1000, pet: true });
+      const prof = czPreview ? { ...App.profile, [czPreview.cat]: czPreview.id } : App.profile;
+      Draw.portrait(pv, prof, { phase: t / 1000, pet: true });
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
@@ -92,24 +108,49 @@ const UI = (() => {
   function renderCzGrid() {
     const grid = $('cz-grid');
     grid.innerHTML = '';
-    const lists = { color: C.COLORS, hat: C.HATS, eyes: C.EYES, outfit: C.OUTFITS, pet: C.PETS };
+    document.querySelectorAll('.cz-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === czTab));
+    document.querySelectorAll('.cz-filter').forEach((b) => b.classList.toggle('active', b.dataset.filter === czFilter));
+    document.querySelector('.cz-filters').classList.toggle('hidden', czTab === 'color');
+    const list = czTab === 'color' ? C.COLORS : SHARED.COSMETICS[czTab];
     const taken = new Set(App.room ? App.room.players.filter((p) => p.id !== App.myId).map((p) => p.color) : []);
-    for (const item of lists[czTab]) {
-      const sel = App.profile[czTab] === item.id;
-      const b = el('button', 'cz-item' + (sel ? ' selected' : ''));
-      b.title = item.name;
+    if (czTab !== 'color') {
+      const owned = list.filter((it) => Wallet.owns(czTab, it.id)).length;
+      $('cz-owned-count').textContent = `${owned} / ${list.length} owned`;
+    }
+    for (const it of list) {
+      const owned = Wallet.owns(czTab, it.id);
+      if (czTab !== 'color' && ((czFilter === 'owned' && !owned) || (czFilter === 'shop' && owned))) continue;
+      const sel = App.profile[czTab] === it.id;
+      const previewing = czPreview && czPreview.cat === czTab && czPreview.id === it.id;
+      const b = el('button', 'cz-item' + (sel ? ' selected' : '') + (owned ? '' : ' locked') + (previewing ? ' previewing' : ''));
+      b.title = it.name;
       if (czTab === 'color') {
-        const c = Draw.col(item.id);
+        const c = Draw.col(it.id);
         b.style.background = `linear-gradient(160deg, ${c.body}, ${c.shade})`;
         b.classList.add('swatch');
-        if (taken.has(item.id)) { b.classList.add('taken'); b.disabled = true; }
+        if (taken.has(it.id)) { b.classList.add('taken'); b.disabled = true; }
       } else {
-        const prof = { ...App.profile, [czTab]: item.id };
-        b.appendChild(portraitCanvas(prof, 72, { pet: czTab === 'pet' }));
-        b.appendChild(el('small', '', esc(item.name)));
+        const prof = { ...App.profile, [czTab]: it.id };
+        b.appendChild(portraitCanvas(prof, 72, czTab === 'pet' ? { petOnly: true } : {}));
+        b.appendChild(el('small', '', esc(it.name)));
+        b.appendChild(el('span', 'cz-price ' + (owned ? (it.price ? 'owned' : 'free') : ''), owned ? (it.price ? '✓' : 'FREE') : `🍪 ${it.price}`));
       }
-      b.onclick = () => { App.setProfile({ [czTab]: item.id }); renderCzGrid(); };
+      b.onclick = () => {
+        if (owned) { czPreview = null; App.setProfile({ [czTab]: it.id }); }
+        else czPreview = { cat: czTab, id: it.id };
+        Sfx.click();
+        renderCzGrid();
+      };
       grid.appendChild(b);
+    }
+    const box = $('cz-buy-box');
+    box.classList.toggle('hidden', !czPreview);
+    if (czPreview) {
+      const it = SHARED.COSMETIC_BY_ID[czPreview.cat][czPreview.id];
+      const afford = Wallet.cookies >= it.price;
+      $('cz-buy-name').innerHTML = `<b>${esc(it.name)}</b>`;
+      $('cz-buy').disabled = !afford;
+      $('cz-buy').textContent = afford ? `Buy for 🍪 ${it.price}` : `Need 🍪 ${it.price - Wallet.cookies} more`;
     }
   }
 
@@ -478,7 +519,7 @@ const UI = (() => {
   }
 
   // ------------------------------------------------------------------ game over
-  function gameOver(d) {
+  function gameOver(d, reward) {
     meetingEnd();
     $('overlay-splash').classList.add('hidden');
     const me = d.players.find((p) => p.id === App.myId);
@@ -502,6 +543,16 @@ const UI = (() => {
       roles.appendChild(el('div', 'go-role', `<i style="background:${Draw.col(p.color).body}"></i>${esc(p.name)} — <b style="color:${R.color}">${R.name}</b>${p.alive ? '' : ' 💀'}`));
     }
     o.appendChild(roles);
+    if (reward) {
+      const box = el('div', 'go-cookies');
+      const parts = [['Tasks', reward.tasks], ['Win', reward.win], ['Kills', reward.kills], ['Played', reward.played]].filter((x) => x[1] > 0);
+      box.innerHTML = `<div class="gc-total">+<span>0</span> 🍪</div><div class="gc-parts">${parts.map(([k, v]) => `<span>${k} +${v}</span>`).join('') || '<span>No cookies this time. Do tasks to earn some!</span>'}</div><div class="gc-bal">Balance: 🍪 ${Wallet.cookies}</div>`;
+      o.appendChild(box);
+      const num = box.querySelector('.gc-total span');
+      let n = 0;
+      const step = Math.max(1, Math.ceil(reward.total / 30));
+      const iv = setInterval(() => { n = Math.min(reward.total, n + step); num.textContent = n; if (n >= reward.total) clearInterval(iv); }, 40);
+    }
     o.appendChild(el('div', 'go-foot', 'Returning to the lobby…'));
     o.classList.remove('hidden');
     won ? Sfx.win() : Sfx.lose();

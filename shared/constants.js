@@ -25,30 +25,6 @@
     { id: 'coral', name: 'Coral', body: '#dd6a6a', shade: '#b04752' },
   ];
 
-  const HATS = [
-    { id: 'none', name: 'None' }, { id: 'cap', name: 'Ball Cap' }, { id: 'tophat', name: 'Top Hat' },
-    { id: 'crown', name: 'Crown' }, { id: 'beanie', name: 'Beanie' }, { id: 'party', name: 'Party Hat' },
-    { id: 'halo', name: 'Halo' }, { id: 'horns', name: 'Devil Horns' }, { id: 'chef', name: 'Chef Hat' },
-    { id: 'cowboy', name: 'Cowboy Hat' }, { id: 'flower', name: 'Flower' }, { id: 'headphones', name: 'Headphones' },
-    { id: 'antlers', name: 'Antlers' }, { id: 'pirate', name: 'Pirate Hat' }, { id: 'wizard', name: 'Wizard Hat' },
-    { id: 'bow', name: 'Bow' }, { id: 'helmet', name: 'Space Helmet' }, { id: 'sprout', name: 'Sprout' },
-  ];
-  const EYES = [
-    { id: 'normal', name: 'Normal' }, { id: 'happy', name: 'Happy' }, { id: 'angry', name: 'Angry' },
-    { id: 'sleepy', name: 'Sleepy' }, { id: 'cyclops', name: 'Cyclops' }, { id: 'shades', name: 'Shades' },
-    { id: 'goggles', name: 'Goggles' }, { id: 'hearts', name: 'Hearts' }, { id: 'stars', name: 'Starry' },
-  ];
-  const OUTFITS = [
-    { id: 'none', name: 'None' }, { id: 'scarf', name: 'Scarf' }, { id: 'tie', name: 'Necktie' },
-    { id: 'suit', name: 'Suit' }, { id: 'cape', name: 'Cape' }, { id: 'labcoat', name: 'Lab Coat' },
-    { id: 'overalls', name: 'Overalls' }, { id: 'stars', name: 'Star Pattern' }, { id: 'bowtie', name: 'Bow Tie' },
-  ];
-  const PETS = [
-    { id: 'none', name: 'None' }, { id: 'drone', name: 'Mini Drone' }, { id: 'kitty', name: 'Kitty' },
-    { id: 'slime', name: 'Slime' }, { id: 'ufo', name: 'Tiny UFO' }, { id: 'duck', name: 'Duckling' },
-    { id: 'robot', name: 'Robo Pal' },
-  ];
-
   // team: 'crew' or 'impostor'. options are per-role tunables shown in the lobby settings.
   const ROLES = {
     crewmate: { team: 'crew', name: 'Crewmate', color: '#8ad3ff', desc: 'Complete your tasks and vote out the Impostors.' },
@@ -158,7 +134,7 @@
   }
 
   return {
-    COLORS, HATS, EYES, OUTFITS, PETS, ROLES, SPECIAL_CREW, SPECIAL_IMPOSTOR, SETTINGS_SCHEMA,
+    COLORS, ROLES, SPECIAL_CREW, SPECIAL_IMPOSTOR, SETTINGS_SCHEMA,
     defaultSettings,
     PLAYER_RADIUS: 16,
     BASE_SPEED: 250,          // world units / second

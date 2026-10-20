@@ -1,5 +1,6 @@
 const C = require('../shared/constants');
 const { MAPS, TASKS } = require('../shared/map');
+const { COSMETIC_BY_ID, COSMETIC_DEFAULTS, REWARDS } = require('../shared/cosmetics');
 
 const TICK_MS = 50;
 const now = () => Date.now();
@@ -15,7 +16,7 @@ function shuffle(arr) {
   return a;
 }
 const ids = (list) => list.map((x) => x.id);
-const HAT_IDS = ids(C.HATS), EYE_IDS = ids(C.EYES), OUTFIT_IDS = ids(C.OUTFITS), PET_IDS = ids(C.PETS), COLOR_IDS = ids(C.COLORS);
+const COLOR_IDS = ids(C.COLORS);
 
 function cleanName(n) {
   n = String(n || '').replace(/[^\p{L}\p{N} _\-.!?']/gu, '').trim().slice(0, C.MAX_NAME);
@@ -84,10 +85,8 @@ class Room {
     prof = prof || {};
     p.name = cleanName(prof.name);
     p.color = this.freeColor(prof.color, p.id);
-    p.hat = HAT_IDS.includes(prof.hat) ? prof.hat : 'none';
-    p.eyes = EYE_IDS.includes(prof.eyes) ? prof.eyes : 'normal';
-    p.outfit = OUTFIT_IDS.includes(prof.outfit) ? prof.outfit : 'none';
-    p.pet = PET_IDS.includes(prof.pet) ? prof.pet : 'none';
+    // Cookies and purchases live in each player's browser, so any catalog item is accepted here.
+    for (const cat in COSMETIC_DEFAULTS) p[cat] = COSMETIC_BY_ID[cat][prof[cat]] ? prof[cat] : COSMETIC_DEFAULTS[cat];
   }
 
   // ------------------------------------------------------------------ membership
@@ -256,7 +255,7 @@ class Room {
         alive: true, role: 'crewmate', team: 'crew', tasks: [], inVent: null, emergencyLeft: S.emergencyMeetings,
         killCooldownEnd: t + 10000, abilityCooldownEnd: t + 10000, ventCooldownEnd: t, ventExitAt: 0,
         shiftInto: null, shiftEnd: 0, invisibleUntil: 0, protectedUntil: 0, protectedBy: null,
-        trackTarget: null, trackUntil: 0, vitalsUntil: 0, scanning: false, examined: new Set(), diedAt: 0, ghostRole: null,
+        trackTarget: null, trackUntil: 0, vitalsUntil: 0, scanning: false, examined: new Set(), diedAt: 0, ghostRole: null, kills: 0,
       });
     }
     list.slice(0, numImp).forEach((q) => { q.role = 'impostor'; q.team = 'impostor'; });
@@ -377,6 +376,7 @@ class Room {
     this.game.bodies.push(body);
     p.x = v.x; p.y = v.y;
     p.killCooldownEnd = t + kc;
+    p.kills++;
     p.socket.emit('teleport', { x: p.x, y: p.y });
     p.socket.emit('killFx', { victim: this.profileOf(v) });
     v.socket.emit('youDied', { killer: killerLook, victim: this.profileOf(v), ghostRole: v.ghostRole });
@@ -740,11 +740,31 @@ class Room {
     g.over = true;
     this.phase = 'ended';
     this.emitAll('gameOver', {
-      winner, reason,
+      winner, reason, rewards: this.rewards(winner),
       players: [...this.players.values()].map((q) => ({ ...this.profileOf(q), role: q.role, team: q.team, alive: q.alive })),
     });
     g.endTimer = setTimeout(() => this.backToLobby(), 9000);
     return true;
+  }
+
+  // Cookies each player earned this game, by reason.
+  rewards(winner) {
+    const g = this.game;
+    const longEnough = now() - g.startedAt >= REWARDS.minGameSeconds * 1000;
+    const out = {};
+    for (const q of this.players.values()) {
+      let steps = 0;
+      if (q.team === 'crew') for (const tk of q.tasks) steps += tk.done ? TASKS[tk.id].steps.length : tk.step;
+      const r = {
+        played: longEnough ? REWARDS.played : 0,
+        win: winner && q.team === winner ? REWARDS.win : 0,
+        tasks: steps * REWARDS.perTaskStep,
+        kills: (q.kills || 0) * REWARDS.perKill,
+      };
+      r.total = r.played + r.win + r.tasks + r.kills;
+      out[q.id] = r;
+    }
+    return out;
   }
 
   backToLobby() {

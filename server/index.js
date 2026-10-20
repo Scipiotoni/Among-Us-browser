@@ -86,4 +86,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sus Station running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Browser Imposter running on http://localhost:${PORT}`));

@@ -136,7 +136,7 @@
       { x: 470, y: 60, w: 160, h: 100, a: null, b: 'lobby', noDoor: true },
     ],
     stations: {
-      laptop: { x: 160, y: 160, label: 'Wardrobe', console: 'wardrobe' },
+      laptop: { x: 160, y: 160, label: 'Shop & Wardrobe', console: 'wardrobe' },
       laptop2: { x: 940, y: 160, label: 'Game Settings', console: 'settings' },
     },
     vents: [],

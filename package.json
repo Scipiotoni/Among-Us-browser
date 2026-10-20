@@ -1,5 +1,5 @@
 {
-  "name": "sus-station",
+  "name": "browser-imposter",
   "version": "1.0.0",
   "description": "Browser-based multiplayer social deduction game",
   "main": "server/index.js",

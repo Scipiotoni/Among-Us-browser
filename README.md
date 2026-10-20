@@ -1,4 +1,4 @@
-# Sus Station 🚀
+# Browser Imposter 🚀
 
 A free, browser-based multiplayer social deduction game to play with friends. Crewmates fix the ship and hunt for the traitors; Impostors sabotage, vent and eliminate the crew.
 
@@ -13,7 +13,8 @@ No downloads for players: one person hosts the server and everyone else just ope
 - **Online lobbies** with 5-letter codes, invite links, and a public lobby browser
 - **Host & admins:** the host (👑) can promote admins (🛡), transfer host, kick, ban, mute, lock the lobby, change settings, and start or force-end games
 - **Walkable lobby** with a wardrobe and a settings terminal
-- **Customization:** 18 colors (unique per lobby), 18 hats, 9 eye styles, 9 outfits, 7 pets. Your look is saved in your browser.
+- **Customization & cookie shop:** 18 colors (unique per lobby), plus 137 cosmetics across hats, eyes, outfits and pets. Many are free; the rest cost 🍪 cookies.
+- **Cookies:** earned at the end of every game: +2 per task step, +20 for winning, +4 per kill as an Impostor, +5 for playing (games over 1 minute). New players start with 50. Cookies and purchases are saved in each player's browser.
 - **Roles**
   - Crew: Crewmate, **Engineer** (vents), **Scientist** (portable vitals), **Tracker** (follow a player), **Noisemaker** (alerts everyone on death), **Guardian** (shields players after death), **Detective** (examines bodies to get two suspects)
   - Impostors: Impostor, **Shapeshifter** (disguise), **Phantom** (invisibility), **Viper** (bodies dissolve)
@@ -69,7 +70,8 @@ Click **🔗 Invite** in the lobby to copy a link that pre-fills your lobby code
 ```
 server/index.js     Express + Socket.IO entry point
 server/room.js      Authoritative game logic (lobby, roles, kills, meetings, sabotage, win checks)
-shared/constants.js Colors, cosmetics, roles, settings schema (used by server + browser)
+shared/constants.js Colors, roles, settings schema (used by server + browser)
+shared/cosmetics.js Cosmetics catalog with cookie prices, and reward amounts
 shared/map.js       Map geometry, vents, stations, tasks, collision / line-of-sight helpers
 public/js/draw.js   Character, cosmetics and pet rendering
 public/js/world.js  Map pre-render and field-of-view
