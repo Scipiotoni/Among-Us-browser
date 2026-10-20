@@ -162,6 +162,7 @@ const App = (() => {
   // ------------------------------------------------------------------ boot
   Cloak.init();
   Wallet.load(App.profile);
+  { const anim = Wallet.takeMigratedAnim(); if (anim) App.setProfile({ anim }); }
   Net.start();
   window.addEventListener('DOMContentLoaded', () => {
     Accounts.onChange(() => UI.renderAccount());

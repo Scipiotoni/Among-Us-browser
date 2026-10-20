@@ -233,6 +233,292 @@ const KillAnim = (() => {
         if (p > 0.82) stars(c, VX + 60, FLOOR - 70, t);
       }
     } },
+    pistol: { name: 'Quick Draw', draw(c, p, t, k, v) {
+      stage(c, '#2a1d12');
+      who(c, k, KX, FLOOR, 1, t);
+      const draw = easeOut(seg(p, 0.05, 0.2));
+      // cartoon blaster pistol
+      c.save(); c.translate(KX + 30 + draw * 30, FLOOR - 62); c.rotate(-0.1 + (p > 0.3 && p < 0.38 ? -0.35 : 0));
+      c.fillStyle = '#4b4f5a'; c.strokeStyle = '#111'; c.lineWidth = 3;
+      c.beginPath(); c.roundRect(0, -8, 46, 14, 3); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(4, 2, 12, 20, 3); c.fillStyle = '#7b4a2a'; c.fill(); c.stroke();
+      c.restore();
+      if (p > 0.3 && p < 0.4) {
+        Draw.star(c, KX + 112, FLOOR - 66, 20, '#ffd32a');
+        c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.moveTo(KX + 130, FLOOR - 66); c.lineTo(KX + 130 + seg(p, 0.3, 0.38) * (VX - KX - 150), FLOOR - 64); c.stroke();
+      }
+      word(c, 'BANG!', KX + 120, 120, seg(p, 0.3, 0.45) * (p < 0.7 ? 1 : 0));
+      const fall = seg(p, 0.38, 0.62);
+      if (fall === 0) who(c, v, VX, FLOOR, -1, t);
+      else if (fall < 1) {
+        c.save(); c.translate(VX + fall * 30, FLOOR); c.rotate(fall * 1.5);
+        Draw.character(c, 0, 0, { ...v, dir: -1, scale: S, phase: t, noPet: true }); c.restore();
+      } else { body(c, v, VX + 40, FLOOR); stars(c, VX + 40, FLOOR - 70, t); }
+      if (p > 0.42) for (let i = 0; i < 3; i++) puff(c, KX + 106 + Math.sin(t * 3 + i) * 4, FLOOR - 76 - seg(p, 0.42, 1) * 50 - i * 12, 5 + i * 2, 0.4 * (1 - seg(p, 0.42, 1)));
+    } },
+    knife: { name: 'Backstab', draw(c, p, t, k, v) {
+      stage(c, '#151025');
+      const sneak = seg(p, 0.1, 0.3);
+      const kx = p < 0.2 ? KX : VX + 75;
+      if (p > 0.18 && p < 0.24) for (let i = 0; i < 6; i++) puff(c, KX + (i - 3) * 14, FLOOR - 40 - i * 6, 14, 0.5, '160,140,200');
+      if (p > 0.18 && p < 0.26) for (let i = 0; i < 6; i++) puff(c, VX + 75 + (i - 3) * 14, FLOOR - 40 - i * 6, 14, 0.5, '160,140,200');
+      if (p < 0.2 || p > 0.24) who(c, k, kx, FLOOR, p < 0.2 ? 1 : -1, t, { alpha: p < 0.2 ? 1 - sneak * 2 : Math.min(1, (p - 0.24) * 8) });
+      const stab = seg(p, 0.36, 0.44);
+      if (p > 0.26) {
+        c.save(); c.translate(VX + 50 - stab * 22, FLOOR - 66); c.scale(-1, 1);
+        c.fillStyle = '#dfe6e9'; c.strokeStyle = '#111'; c.lineWidth = 2.5;
+        c.beginPath(); c.moveTo(0, -4); c.lineTo(30, -1); c.lineTo(0, 4); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#2d3436'; c.fillRect(-14, -4, 14, 8);
+        if (Math.sin(t * 10) > 0.6) Draw.star(c, 22, -6, 5, '#fff');
+        c.restore();
+      }
+      word(c, 'STAB!', VX, 110, seg(p, 0.42, 0.55) * (p < 0.8 ? 1 : 0), '#ff4757');
+      const jump = seg(p, 0.42, 0.62);
+      if (jump === 0) who(c, v, VX, FLOOR, -1, t);
+      else if (jump < 1) {
+        c.save(); c.translate(VX - jump * 40, FLOOR - Math.sin(jump * Math.PI) * 80); c.rotate(-jump * 1.4);
+        Draw.character(c, 0, 0, { ...v, dir: -1, scale: S, phase: t, noPet: true }); c.restore();
+        if (jump < 0.4) Draw.star(c, VX, FLOOR - 70, 26 * (1 - jump * 2), '#fff');
+      } else { body(c, v, VX - 50, FLOOR); stars(c, VX - 50, FLOOR - 70, t); }
+    } },
+    sword: { name: 'Sword Slash', draw(c, p, t, k, v) {
+      stage(c, '#1d1430');
+      const dash = easeOut(seg(p, 0.2, 0.34));
+      const kx = KX + dash * (VX + 120 - KX);
+      if (dash > 0 && dash < 1) for (let i = 1; i < 5; i++) who(c, k, kx - i * 40, FLOOR, 1, t, { alpha: 0.15 });
+      who(c, k, kx, FLOOR, dash >= 1 ? -1 : 1, t);
+      c.save(); c.translate(kx + (dash >= 1 ? -40 : 40), FLOOR - 70); c.rotate(dash >= 1 ? 2.4 : -0.6);
+      c.fillStyle = '#dfe6e9'; c.strokeStyle = '#111'; c.lineWidth = 2.5;
+      c.beginPath(); c.moveTo(0, -4); c.lineTo(60, -2); c.lineTo(66, 0); c.lineTo(60, 2); c.lineTo(0, 4); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#f9ca24'; c.fillRect(-4, -10, 6, 20); c.fillStyle = '#6d4c41'; c.fillRect(-18, -3, 14, 6);
+      c.restore();
+      if (p > 0.26 && p < 0.42) {
+        c.strokeStyle = `rgba(255,255,255,${1 - seg(p, 0.26, 0.42)})`; c.lineWidth = 8;
+        c.beginPath(); c.arc(VX, FLOOR - 70, 70, -2.2, 0.6); c.stroke();
+      }
+      word(c, 'SLASH!', VX - 40, 105, seg(p, 0.3, 0.45) * (p < 0.75 ? 1 : 0), '#74b9ff');
+      const spin = seg(p, 0.36, 0.62);
+      if (spin === 0) who(c, v, VX, FLOOR, -1, t);
+      else if (spin < 1) {
+        c.save(); c.translate(VX - spin * 30, FLOOR - Math.sin(spin * Math.PI) * 50); c.rotate(spin * 8);
+        Draw.character(c, 0, 0, { ...v, dir: -1, scale: S, phase: t, noPet: true }); c.restore();
+      } else { body(c, v, VX - 30, FLOOR); stars(c, VX - 30, FLOOR - 70, t); }
+    } },
+    bow: { name: 'Bullseye', draw(c, p, t, k, v) {
+      stage(c, '#14261a');
+      who(c, k, KX, FLOOR, 1, t);
+      const pull = seg(p, 0.05, 0.25);
+      c.save(); c.translate(KX + 50, FLOOR - 66);
+      c.strokeStyle = '#8b5a2b'; c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 34, -1.2, 1.2); c.stroke();
+      c.strokeStyle = '#eee'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(Math.cos(-1.2) * 34, Math.sin(-1.2) * 34); c.lineTo(-pull * 20, 0); c.lineTo(Math.cos(1.2) * 34, Math.sin(1.2) * 34); c.stroke();
+      c.restore();
+      const fly = seg(p, 0.28, 0.42);
+      const ax = p < 0.28 ? KX + 50 - pull * 20 : KX + 50 + fly * (VX - KX - 70);
+      const vx2 = VX + seg(p, 0.42, 0.7) * 0;
+      if (p < 0.7) {
+        c.save(); c.translate(p < 0.42 ? ax : VX - 20, FLOOR - 66);
+        c.strokeStyle = '#6d4c41'; c.lineWidth = 3; c.beginPath(); c.moveTo(-40, 0); c.lineTo(0, 0); c.stroke();
+        c.fillStyle = '#95a5a6'; c.beginPath(); c.moveTo(0, -5); c.lineTo(12, 0); c.lineTo(0, 5); c.fill();
+        c.fillStyle = '#e74c3c'; c.beginPath(); c.moveTo(-40, 0); c.lineTo(-48, -6); c.lineTo(-36, 0); c.lineTo(-48, 6); c.fill();
+        c.restore();
+      }
+      word(c, 'THWACK!', VX, 110, seg(p, 0.42, 0.55) * (p < 0.8 ? 1 : 0));
+      const wob = seg(p, 0.42, 0.7);
+      if (wob < 1) {
+        c.save(); c.translate(vx2, FLOOR); c.rotate(Math.sin(wob * 20) * 0.2 * (1 - wob) + wob * wob * 1.4);
+        Draw.character(c, 0, 0, { ...v, dir: -1, scale: S, phase: t, noPet: true }); c.restore();
+      } else { body(c, v, VX + 20, FLOOR); stars(c, VX + 20, FLOOR - 70, t); }
+    } },
+    piano: { name: 'Piano Drop', draw(c, p, t, k, v) {
+      stage(c);
+      who(c, k, KX, FLOOR, 1, t);
+      const fall = easeIn(seg(p, 0.12, 0.36));
+      const y = -150 + fall * (FLOOR - 70 + 150);
+      if (p < 0.36) who(c, v, VX, FLOOR, -1, t);
+      else {
+        body(c, v, VX, FLOOR + 6, { sy: 0.4, sx: 1.4 });
+        for (let i = 0; i < 6; i++) { const a = seg(p, 0.36, 0.8); c.fillStyle = `rgba(255,255,255,${1 - a})`; c.font = 'bold 26px sans-serif'; c.fillText(['♪', '♫'][i % 2], VX - 80 + i * 32, FLOOR - 120 - a * 80 - (i % 3) * 14); }
+        word(c, 'PLONK!', VX, 90, seg(p, 0.36, 0.5));
+      }
+      c.save(); c.translate(VX, Math.min(y, FLOOR - 70));
+      c.fillStyle = '#1e1e24'; c.strokeStyle = '#000'; c.lineWidth = 3;
+      c.beginPath(); c.roundRect(-90, -50, 180, 70, 8); c.fill(); c.stroke();
+      c.fillStyle = '#fff'; c.fillRect(-80, 0, 160, 18);
+      c.fillStyle = '#111'; for (let i = 0; i < 14; i++) if (i % 7 !== 2 && i % 7 !== 6) c.fillRect(-74 + i * 11.5, 0, 6, 11);
+      c.fillStyle = '#1e1e24'; c.fillRect(-80, 20, 8, 40); c.fillRect(72, 20, 8, 40);
+      c.restore();
+    } },
+    meteor: { name: 'Meteor Strike', draw(c, p, t, k, v) {
+      stage(c, '#24101a');
+      who(c, k, KX, FLOOR, 1, t);
+      const fall = easeIn(seg(p, 0.1, 0.4));
+      const mx = W + 60 - fall * (W + 60 - VX), my = -80 + fall * (FLOOR - 40 + 80);
+      if (p < 0.4) {
+        who(c, v, VX, FLOOR, -1, t);
+        for (let i = 0; i < 8; i++) puff(c, mx + i * 14, my - i * 10, 18 - i, 0.5 - i * 0.05, '255,140,40');
+        Draw.ellipse(c, mx, my, 26, 24, '#6d4c41', '#111', 3);
+        Draw.ellipse(c, mx - 6, my - 6, 6, 5, '#4e342e');
+      } else {
+        const b = seg(p, 0.4, 0.75);
+        if (b < 1) { c.fillStyle = `rgba(255,${180 - b * 120},40,${1 - b})`; c.beginPath(); c.arc(VX, FLOOR - 30, 30 + b * 150, 0, 7); c.fill(); }
+        body(c, v, VX, FLOOR, { alpha: seg(p, 0.5, 0.7) });
+        Draw.ellipse(c, VX + 40, FLOOR - 6, 22, 10, '#4e342e', '#111', 2);
+        word(c, 'KABOOM!', VX - 20, 90, b, '#ff9f1a');
+      }
+    } },
+    lightning: { name: 'Thunder Strike', draw(c, p, t, k, v) {
+      stage(c, '#0b0f1e');
+      const dark = seg(p, 0.05, 0.25);
+      c.fillStyle = `rgba(0,0,0,${dark * 0.4})`; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 4; i++) Draw.ellipse(c, VX - 70 + i * 45, 50 + (i % 2) * 10, 50, 26, `rgba(70,75,95,${dark})`);
+      who(c, k, KX, FLOOR, 1, t);
+      const strike = p > 0.32 && p < 0.42;
+      if (strike) {
+        c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(0, 0, W, H);
+        c.strokeStyle = '#fff6a0'; c.lineWidth = 8; c.shadowColor = '#fff'; c.shadowBlur = 24;
+        c.beginPath(); c.moveTo(VX + 10, 60); c.lineTo(VX - 20, 140); c.lineTo(VX + 15, 150); c.lineTo(VX - 10, FLOOR - 70); c.stroke(); c.shadowBlur = 0;
+      }
+      if (p < 0.42) who(c, v, VX, FLOOR, -1, t);
+      else {
+        body(c, v, VX, FLOOR);
+        const s2 = seg(p, 0.42, 1);
+        for (let i = 0; i < 4; i++) puff(c, VX - 30 + i * 20, FLOOR - 30 - s2 * 90 - i * 10, 10 + s2 * 18, 0.5 * (1 - s2), '120,120,130');
+        word(c, 'ZZZAP!', VX, 120, seg(p, 0.42, 0.55), '#fff6a0');
+      }
+    } },
+    pumpkin: { name: 'Pumpkin Smash', draw(c, p, t, k, v) {
+      stage(c, '#1a0b22');
+      who(c, k, KX, FLOOR, 1, t);
+      const fall = easeIn(seg(p, 0.12, 0.34)), lift = easeOut(seg(p, 0.66, 0.86));
+      const py = -140 + fall * (FLOOR - 70 + 140) - lift * 420;
+      if (p < 0.34) who(c, v, VX, FLOOR, -1, t);
+      else body(c, v, VX, FLOOR, { alpha: seg(p, 0.66, 0.75) });
+      c.save(); c.translate(VX, py);
+      Draw.ellipse(c, 0, 0, 80, 64, '#ff7b1c', '#111', 4);
+      c.strokeStyle = 'rgba(120,50,0,0.5)'; c.lineWidth = 3; for (const x of [-34, 0, 34]) { c.beginPath(); c.ellipse(x, 0, 20, 62, 0, 0, 7); c.stroke(); }
+      const glow = p > 0.34 && p < 0.66 ? 0.6 + Math.sin(t * 12) * 0.4 : 0.4;
+      c.fillStyle = `rgba(255,230,90,${glow})`;
+      c.beginPath(); c.moveTo(-40, -14); c.lineTo(-24, -34); c.lineTo(-12, -12); c.moveTo(12, -12); c.lineTo(24, -34); c.lineTo(40, -14); c.fill();
+      c.beginPath(); c.moveTo(-42, 12); for (let i = 0; i <= 8; i++) c.lineTo(-42 + i * 10.5, 12 + (i % 2 ? 12 : 0)); c.lineTo(42, 30); c.quadraticCurveTo(0, 46, -42, 30); c.fill();
+      c.fillStyle = '#2d6a1f'; c.fillRect(-6, -78, 12, 18);
+      c.restore();
+      word(c, 'BOO!', VX, 90, seg(p, 0.36, 0.5) * (p < 0.66 ? 1 : 0), '#ff7b1c');
+    } },
+    bats: { name: 'Bat Swarm', draw(c, p, t, k, v) {
+      stage(c, '#140a22');
+      who(c, k, KX, FLOOR, 1, t);
+      const swarm = seg(p, 0.1, 0.35), leave = seg(p, 0.62, 0.85);
+      if (p < 0.6) who(c, v, VX, FLOOR, -1, t, { alpha: 1 - seg(p, 0.45, 0.6) });
+      else body(c, v, VX, FLOOR, { alpha: seg(p, 0.62, 0.75) });
+      for (let i = 0; i < 14; i++) {
+        const a = t * (3 + (i % 3)) + i * 0.9, r = 70 - swarm * 20 + leave * 500;
+        const bx = KX + (VX - KX) * swarm + Math.cos(a) * r * swarm, by = FLOOR - 70 + Math.sin(a) * r * 0.6 * swarm - leave * 200;
+        if (swarm === 0) continue;
+        const f = Math.sin(t * 16 + i) * 6;
+        c.fillStyle = '#05020a';
+        c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx - 9, by - 7 - f, bx - 18, by - 2 - f); c.quadraticCurveTo(bx - 10, by + 2, bx, by + 4);
+        c.quadraticCurveTo(bx + 10, by + 2, bx + 18, by - 2 - f); c.quadraticCurveTo(bx + 9, by - 7 - f, bx, by); c.fill();
+        c.fillStyle = '#ff4757'; c.fillRect(bx - 2, by - 1, 1.5, 1.5); c.fillRect(bx + 1, by - 1, 1.5, 1.5);
+      }
+    } },
+    present: { name: 'Surprise Present', draw(c, p, t, k, v) {
+      stage(c, '#0d1a2a');
+      who(c, k, KX, FLOOR, 1, t);
+      const fall = easeIn(seg(p, 0.1, 0.3)), open = seg(p, 0.4, 0.5);
+      const gy = -100 + fall * (FLOOR - 40 + 100);
+      if (p < 0.5) who(c, v, VX + 20, FLOOR, -1, t);
+      if (open < 1) {
+        c.save(); c.translate(VX - 60, Math.min(gy, FLOOR - 40) + (p > 0.3 && p < 0.4 ? Math.sin(t * 40) * 3 : 0));
+        c.fillStyle = '#e84118'; c.strokeStyle = '#111'; c.lineWidth = 3; c.fillRect(-36, -36, 72, 72); c.strokeRect(-36, -36, 72, 72);
+        c.fillStyle = '#ffd32a'; c.fillRect(-7, -36, 14, 72); c.fillRect(-36, -7, 72, 14);
+        c.translate(0, -36 - open * 80); c.rotate(open * 2);
+        c.fillStyle = '#c23616'; c.fillRect(-40, -12, 80, 14); c.strokeRect(-40, -12, 80, 14);
+        Draw.ellipse(c, -10, -18, 10, 7, '#ffd32a', '#111', 2); Draw.ellipse(c, 10, -18, 10, 7, '#ffd32a', '#111', 2);
+        c.restore();
+      }
+      const boom = seg(p, 0.45, 0.8);
+      if (boom > 0 && boom < 1) {
+        for (let i = 0; i < 26; i++) {
+          const a = (i / 26) * Math.PI * 2;
+          c.fillStyle = ['#ff4757', '#2ed573', '#ffd32a', '#1e90ff', '#fff'][i % 5];
+          c.save(); c.translate(VX - 20 + Math.cos(a) * boom * 200, FLOOR - 60 + Math.sin(a) * boom * 140 + boom * boom * 60); c.rotate(a + boom * 8);
+          c.fillRect(-4, -2, 8, 4); c.restore();
+        }
+        word(c, 'SURPRISE!', VX - 30, 90, boom, '#2ed573');
+      }
+      if (p > 0.5) body(c, v, VX + 20, FLOOR, { alpha: seg(p, 0.5, 0.6) });
+    } },
+    snowballs: { name: 'Snowball Barrage', draw(c, p, t, k, v) {
+      stage(c, '#10223a');
+      who(c, k, KX, FLOOR, 1, t);
+      const hits = Math.floor(seg(p, 0.12, 0.6) * 8);
+      for (let i = 0; i < 8; i++) {
+        const s0 = 0.12 + i * 0.06, q = seg(p, s0, s0 + 0.08);
+        if (q > 0 && q < 1) Draw.ellipse(c, KX + 50 + q * (VX - KX - 60), FLOOR - 60 - Math.sin(q * Math.PI) * 60 + (i % 3) * 12, 9, 9, '#fff', '#9fb6cc', 2);
+      }
+      const buried = seg(p, 0.55, 0.75);
+      if (buried < 1) who(c, v, VX, FLOOR, -1, t);
+      for (let i = 0; i < hits; i++) Draw.ellipse(c, VX - 24 + (i * 17) % 50, FLOOR - 30 - ((i * 23) % 70), 11, 10, '#fff', '#9fb6cc', 2);
+      if (buried > 0) {
+        c.fillStyle = '#f5faff'; c.strokeStyle = '#9fb6cc'; c.lineWidth = 3;
+        c.beginPath(); c.moveTo(VX - 80, FLOOR + 2); c.quadraticCurveTo(VX, FLOOR - 170 * buried, VX + 80, FLOOR + 2); c.fill(); c.stroke();
+      }
+      if (p > 0.8) {
+        Draw.ellipse(c, VX - 10, FLOOR - 90, 7, 7, '#111'); Draw.ellipse(c, VX + 14, FLOOR - 90, 7, 7, '#111');
+        word(c, 'BRRR!', VX, 70, seg(p, 0.8, 0.9), '#c7ecee');
+      }
+    } },
+    shark: { name: 'Shark Attack', draw(c, p, t, k, v) {
+      stage(c, '#08304a');
+      const rise = easeOut(seg(p, 0.05, 0.25)) * (1 - easeIn(seg(p, 0.8, 0.95)));
+      who(c, k, KX, FLOOR, 1, t);
+      const jump = seg(p, 0.38, 0.62);
+      if (jump < 0.5) who(c, v, VX, FLOOR - rise * 20, -1, t);
+      // water
+      const wy = FLOOR + 10 - rise * 60;
+      c.fillStyle = 'rgba(30,144,255,0.55)'; c.beginPath(); c.moveTo(VX - 160, H);
+      for (let x = VX - 160; x <= VX + 180; x += 20) c.lineTo(x, wy + Math.sin(x / 20 + t * 4) * 5);
+      c.lineTo(VX + 180, H); c.fill();
+      const finX = VX + 140 - seg(p, 0.15, 0.38) * 140;
+      if (p < 0.38) { c.fillStyle = '#7f8fa6'; c.beginPath(); c.moveTo(finX, wy - 40); c.lineTo(finX + 26, wy); c.lineTo(finX - 10, wy); c.closePath(); c.fill(); }
+      if (jump > 0 && jump < 1) {
+        c.save(); c.translate(VX, wy - Math.sin(jump * Math.PI) * 170); c.rotate(-0.6 + jump * 1.2);
+        Draw.ellipse(c, 0, 0, 70, 28, '#7f8fa6', '#111', 3);
+        Draw.ellipse(c, 0, 10, 52, 12, '#dfe6e9');
+        c.fillStyle = '#7f8fa6'; c.beginPath(); c.moveTo(-4, -26); c.lineTo(10, -54); c.lineTo(22, -24); c.fill(); c.stroke();
+        c.beginPath(); c.moveTo(-68, 0); c.lineTo(-96, -24); c.lineTo(-90, 22); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#fff'; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(34 + i * 5, 6); c.lineTo(36 + i * 5, 14); c.lineTo(38 + i * 5, 6); c.fill(); }
+        Draw.ellipse(c, 44, -8, 3, 3, '#111');
+        c.restore();
+        word(c, 'CHOMP!', VX, 70, jump);
+      }
+      if (p > 0.62) {
+        for (let i = 0; i < 8; i++) Draw.ellipse(c, VX - 60 + i * 18, wy - seg(p, 0.62, 0.75) * 50 * Math.sin(i), 6, 6, 'rgba(200,235,255,0.8)');
+        body(c, v, VX, FLOOR, { alpha: seg(p, 0.85, 0.95) });
+      }
+    } },
+    coconut: { name: 'Coconut Bonk', draw(c, p, t, k, v) {
+      stage(c, '#1d3a2a');
+      who(c, k, KX, FLOOR, 1, t);
+      const shake = p > 0.1 && p < 0.3 ? Math.sin(t * 40) * 4 : 0;
+      c.save(); c.translate(VX + 80 + shake, FLOOR);
+      c.strokeStyle = '#8b5a2b'; c.lineWidth = 16; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-20, -120, -40, -230); c.stroke();
+      c.fillStyle = '#27ae60'; for (let i = 0; i < 6; i++) { c.save(); c.translate(-40, -230); c.rotate(i * 1.05 + 0.3); c.beginPath(); c.ellipse(40, 0, 44, 10, 0.2, 0, 7); c.fill(); c.restore(); }
+      c.restore();
+      const fall = easeIn(seg(p, 0.3, 0.45));
+      const cy = FLOOR - 230 + 20 + fall * (230 - 20 - 120);
+      if (p < 0.62) Draw.ellipse(c, VX + 40 - fall * 40, p < 0.45 ? cy : FLOOR - 125 - Math.sin(seg(p, 0.45, 0.62) * Math.PI) * 50, 14, 13, '#6d4c41', '#111', 2.5);
+      if (p < 0.45) who(c, v, VX, FLOOR, -1, t);
+      else {
+        const wob = seg(p, 0.45, 0.65);
+        if (wob < 1) {
+          c.save(); c.translate(VX, FLOOR); c.rotate(Math.sin(wob * 18) * 0.25 + wob * wob * 1.5);
+          Draw.character(c, 0, 0, { ...v, dir: -1, scale: S, phase: t, noPet: true }); c.restore();
+        } else body(c, v, VX + 10, FLOOR);
+        stars(c, VX, FLOOR - 140 + wob * 70, t);
+        word(c, 'BONK!', VX - 40, 100, seg(p, 0.45, 0.6));
+      }
+    } },
   };
 
   // Plays a scene in `host` (an element); calls done() at the end.

@@ -8,6 +8,8 @@
   const H = (id, name, price, draw, extra) => ({ id, name, price, draw, ...extra });
   // Box-only exclusives: no price, can't be bought, only won from Mystery Boxes.
   const X = (rarity, id, name, draw, extra) => ({ id, name, price: null, rarity, draw, ...extra });
+  // Event items: buyable (price) or box-only (rarity) while their event runs; owned forever after.
+  const EV = (event, item) => ({ ...item, event });
 
   const HATS = [
     H('none', 'None', 0, 'none', { ant: true }),
@@ -83,6 +85,29 @@
     X('legendary', 'x_blueflame', 'Blue Flame', 'flame', { c: ['#0652dd', '#1289a7', '#c7ecee'] }),
     X('legendary', 'x_rainbowhalo', 'Rainbow Halo', 'halo', { rainbow: true, ant: true }),
     X('mythic', 'x_orbit', 'Tiny Solar System', 'orbit', { ant: true }),
+    X('rare', 'x_obsidianhorns', 'Obsidian Horns', 'horns', { c: '#2d3436', ant: true }),
+    X('rare', 'x_silvertophat', 'Silver Top Hat', 'tophat', { c: '#b2bec3', c2: '#0984e3' }),
+    X('epic', 'x_emeraldcrown', 'Emerald Crown', 'crown', { c: '#2ecc71', c2: '#f9ca24', shine: true }),
+    X('epic', 'x_galaxywizard', 'Galaxy Wizard Hat', 'wizard', { c: '#2c1a5e' }),
+    X('legendary', 'x_greenflame', 'Ghost Flame', 'flame', { c: ['#10ac84', '#1dd1a1', '#c8ffe8'] }),
+    // ---- Halloween
+    EV('halloween', H('h_pumpkin', 'Pumpkin Head', 120, 'pumpkin')),
+    EV('halloween', H('h_candycorn', 'Candy Corn', 80, 'candycorn', { ant: true })),
+    EV('halloween', H('h_witch', 'Spooky Witch Hat', 100, 'witch')),
+    EV('halloween', X('epic', 'h_batwings', 'Bat Ears', 'bathat', { ant: true })),
+    EV('halloween', X('legendary', 'h_jackflame', 'Jack-o\'-Flame', 'flame', { c: ['#ff6a00', '#ffa600', '#7dff6b'] })),
+    // ---- Christmas
+    EV('christmas', H('c_elf', 'Elf Hat', 90, 'elf')),
+    EV('christmas', H('c_reindeer', 'Reindeer Antlers', 110, 'reindeer', { ant: true })),
+    EV('christmas', H('c_santa', 'Fluffy Santa Hat', 80, 'santa')),
+    EV('christmas', X('epic', 'c_star', 'Tree Topper Star', 'startopper')),
+    EV('christmas', X('legendary', 'c_icecrown', 'Frost Crown', 'crown', { c: '#dff9fb', c2: '#00cec9', shine: true })),
+    // ---- Summer
+    EV('summer', H('s_sunhat', 'Sun Hat', 80, 'sunhat')),
+    EV('summer', H('s_watermelon', 'Watermelon Hat', 100, 'watermelon')),
+    EV('summer', H('s_flowers', 'Flower Crown', 90, 'flowercrown', { ant: true })),
+    EV('summer', X('epic', 's_snorkel', 'Snorkel', 'snorkel')),
+    EV('summer', X('legendary', 's_sun', 'Tiny Sun', 'orbit', { sunOnly: true, ant: true })),
   ];
 
   const EYES = [
@@ -115,6 +140,15 @@
     X('epic', 'x_fireeyes', 'Fire Eyes', 'laser', { c: '#ff9f1a', c2: 'rgba(255,159,26,' }),
     X('epic', 'x_diamondeyes', 'Diamond Eyes', 'stars', { c: '#a8e6ff' }),
     X('legendary', 'x_galaxyeyes', 'Galaxy Eyes', 'galaxyeyes'),
+    X('rare', 'x_goldshades', 'Gold Shades', 'shades', { c: '#f9ca24' }),
+    X('epic', 'x_emeraldeyes', 'Emerald Eyes', 'stars', { c: '#2ecc71' }),
+    X('epic', 'x_icelaser', 'Ice Laser Eyes', 'laser', { c: '#74b9ff', c2: 'rgba(116,185,255,' }),
+    EV('halloween', H('h_glow', 'Glowing Eyes', 90, 'glow', { c: '#7dff6b' })),
+    EV('halloween', X('rare', 'h_spider', 'Spider Eyes', 'spider')),
+    EV('christmas', H('c_snowflake', 'Snowflake Eyes', 90, 'stars', { c: '#dff9fb' })),
+    EV('christmas', X('rare', 'c_redglow', 'Rudolph Glow', 'glow', { c: '#ff4757' })),
+    EV('summer', H('s_coolshades', 'Beach Shades', 70, 'shades', { c: '#ff9f43' })),
+    EV('summer', X('rare', 's_heartshades', 'Heart Shades', 'shades', { c: '#ff6b81' })),
   ];
 
   const OUTFITS = [
@@ -162,6 +196,18 @@
     X('legendary', 'x_diamondarmor', 'Diamond Armor', 'armor', { c: '#a8e6ff', c2: '#4aa8d8' }),
     X('legendary', 'x_rainbowaura', 'Rainbow Aura', 'aura', { rainbow: true, back: true }),
     X('mythic', 'x_wings', 'Phoenix Wings', 'wings', { back: true }),
+    X('rare', 'x_galaxycape', 'Galaxy Cape', 'cape', { c: '#2c1a5e', back: true }),
+    X('epic', 'x_emeraldarmor', 'Emerald Armor', 'armor', { c: '#2ecc71', c2: '#16a085' }),
+    X('legendary', 'x_iceaura', 'Frost Aura', 'aura', { c: ['#74b9ff', '#dff9fb'], back: true }),
+    EV('halloween', H('h_skeleton', 'Skeleton Suit', 110, 'pattern', { p: 'skeleton' })),
+    EV('halloween', H('h_mummy', 'Mummy Wraps', 100, 'pattern', { p: 'mummy' })),
+    EV('halloween', X('epic', 'h_vampire', 'Vampire Cape', 'cape', { c: '#111', c2: '#b71540', back: true })),
+    EV('christmas', H('c_sweater', 'Ugly Sweater', 100, 'pattern', { p: 'sweater' })),
+    EV('christmas', H('c_candycane', 'Candy Cane Stripes', 90, 'pattern', { p: 'candycane' })),
+    EV('christmas', X('epic', 'c_lights', 'String Lights', 'lights')),
+    EV('summer', H('s_hawaii', 'Hawaiian Shirt', 100, 'pattern', { p: 'hawaii' })),
+    EV('summer', H('s_stripes', 'Swim Stripes', 70, 'pattern', { p: 'stripes' })),
+    EV('summer', X('epic', 's_floatie', 'Duck Floatie', 'floatie')),
   ];
 
   const PETS = [
@@ -193,14 +239,35 @@
     X('legendary', 'x_golddragon', 'Golden Dragon', 'dragon', { c: '#f9ca24' }),
     X('legendary', 'x_unicorn', 'Rainbow Unicorn', 'unicornpet'),
     X('mythic', 'x_phoenix', 'Phoenix', 'phoenix'),
+    X('rare', 'x_voidslime', 'Void Slime', 'slime', { c: 'rgba(30,30,46,0.9)' }),
+    X('epic', 'x_goldkitty', 'Golden Kitty', 'kitty', { c: '#f9ca24', eye: '#111' }),
+    X('legendary', 'x_icedragon', 'Ice Dragon', 'dragon', { c: '#74b9ff' }),
+    EV('halloween', H('h_bat', 'Pet Bat', 120, 'bat')),
+    EV('halloween', X('epic', 'h_pumpkinpet', 'Jack the Pumpkin', 'pumpkinpet')),
+    EV('halloween', X('rare', 'h_ghostpet', 'Boo', 'ghostpet')),
+    EV('christmas', H('c_gingerbread', 'Gingerbread', 120, 'gingerbread')),
+    EV('christmas', X('epic', 'c_snowman', 'Mini Snowman', 'snowmanpet')),
+    EV('christmas', X('rare', 'c_penguin', 'Party Penguin', 'penguin')),
+    EV('summer', H('s_crab', 'Crab', 120, 'crab')),
+    EV('summer', X('epic', 's_dolphin', 'Dolphin', 'dolphin')),
+    EV('summer', X('rare', 's_beachball', 'Beach Ball', 'beachball')),
   ];
 
   // Kill effects: the box-only special makes every kill play a random cartoon animation.
-  const ANIMS = [
-    H('none', 'Default', 0, 'none'),
-    X('special', 'killanims', '★ Kill Animations', 'killanims'),
-  ];
-  const KILL_ANIMS = ['zap', 'anvil', 'blackhole', 'rocket', 'freeze', 'ufo', 'banana', 'glove'];
+  // Each kill animation is its own Rare Special prize: whoever unboxes one keeps that one.
+  const KILL_ANIMS = {
+    zap: 'Laser Zap', anvil: 'Anvil Drop', blackhole: 'Black Hole', rocket: 'Rocket Launch', freeze: 'Freeze Ray',
+    ufo: 'UFO Abduction', banana: 'Banana Slip', glove: 'Boxing Glove', pistol: 'Quick Draw', knife: 'Backstab',
+    sword: 'Sword Slash', bow: 'Bullseye', piano: 'Piano Drop', meteor: 'Meteor Strike', lightning: 'Thunder Strike',
+    pumpkin: 'Pumpkin Smash', bats: 'Bat Swarm', present: 'Surprise Present', snowballs: 'Snowball Barrage',
+    shark: 'Shark Attack', coconut: 'Coconut Bonk',
+  };
+  const ANIM_EVENTS = { pumpkin: 'halloween', bats: 'halloween', present: 'christmas', snowballs: 'christmas', shark: 'summer', coconut: 'summer' };
+  const ANIMS = [H('none', 'Default', 0, 'none')];
+  for (const k in KILL_ANIMS) {
+    const item = X('special', 'ka_' + k, '★ ' + KILL_ANIMS[k], 'killanim', { anim: k });
+    ANIMS.push(ANIM_EVENTS[k] ? EV(ANIM_EVENTS[k], item) : item);
+  }
 
   const COSMETICS = { hat: HATS, eyes: EYES, outfit: OUTFITS, pet: PETS, anim: ANIMS };
   const COSMETIC_DEFAULTS = { hat: 'none', eyes: 'normal', outfit: 'none', pet: 'none', anim: 'none' };
@@ -218,18 +285,29 @@
     mythic: { name: 'Mythic', color: '#ff4757', chance: 2 },
     special: { name: '★ Rare Special', color: '#e4ae39', chance: 1 },
   };
-  const BOX = { price: 150, duplicateRefund: 60 };
-  const BOX_POOL = [];
-  for (const cat in COSMETICS) for (const item of COSMETICS[cat]) if (item.rarity) BOX_POOL.push({ cat, item });
-  function rollBox(rand = Math.random) {
+  // The Mystery Box holds every box-only item that isn't from an event; each event has its own box.
+  const BOXES = {
+    mystery: { id: 'mystery', name: 'Mystery Box', icon: '🎁', price: 150, duplicateRefund: 60 },
+    halloween: { id: 'halloween', name: 'Halloween Box', icon: '🎃', price: 150, duplicateRefund: 60, event: 'halloween' },
+    christmas: { id: 'christmas', name: 'Christmas Box', icon: '🎄', price: 150, duplicateRefund: 60, event: 'christmas' },
+    summer: { id: 'summer', name: 'Summer Box', icon: '🏖️', price: 150, duplicateRefund: 60, event: 'summer' },
+  };
+  const BOX_POOLS = {};
+  for (const id in BOXES) BOX_POOLS[id] = [];
+  for (const cat in COSMETICS) for (const item of COSMETICS[cat]) if (item.rarity) BOX_POOLS[item.event || 'mystery'].push({ cat, item });
+  function rollBox(boxId = 'mystery', rand = Math.random) {
+    const pool = BOX_POOLS[boxId] || BOX_POOLS.mystery;
     let r = rand() * 100, rarity = 'rare';
     for (const k in RARITIES) { if (r < RARITIES[k].chance) { rarity = k; break; } r -= RARITIES[k].chance; }
-    const pool = BOX_POOL.filter((x) => x.item.rarity === rarity);
-    return pool[Math.floor(rand() * pool.length)];
+    // Event boxes don't have every rarity: fall back to the nearest one they do have.
+    const order = ['special', 'mythic', 'legendary', 'epic', 'rare'];
+    let tier = pool.filter((x) => x.item.rarity === rarity);
+    for (let i = order.indexOf(rarity); !tier.length && i < order.length; i++) tier = pool.filter((x) => x.item.rarity === order[i]);
+    return tier[Math.floor(rand() * tier.length)];
   }
 
   // Cookies earned at the end of a game.
   const REWARDS = { played: 5, win: 20, perTaskStep: 2, perKill: 4, minGameSeconds: 60, starting: 50 };
 
-  return { COSMETICS, COSMETIC_DEFAULTS, COSMETIC_BY_ID, REWARDS, RARITIES, BOX, BOX_POOL, rollBox, KILL_ANIMS };
+  return { COSMETICS, COSMETIC_DEFAULTS, COSMETIC_BY_ID, REWARDS, RARITIES, BOXES, BOX_POOLS, rollBox, KILL_ANIMS };
 });

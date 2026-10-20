@@ -98,6 +98,8 @@
   const MAP_CHOICES = [
     { id: 'helix', name: 'Station Helix' }, { id: 'polar', name: 'Polar Base' }, { id: 'skylab', name: 'Skyport' },
     { id: 'deepsea', name: 'Abyss Station' }, { id: 'desert', name: 'Dune Outpost' }, { id: 'mine', name: 'Asteroid Mine' },
+    { id: 'manor', name: '🎃 Haunted Manor', event: 'halloween' }, { id: 'workshop', name: '🎄 Santa\'s Workshop', event: 'christmas' },
+    { id: 'beach', name: '🏖️ Beach Resort', event: 'summer' },
   ];
 
   const SETTINGS_SCHEMA = [

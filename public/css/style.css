@@ -483,3 +483,32 @@ body.crit #hud-top-left #task-list { border: 2px solid var(--bad); }
 .killanim-caption span { color: #f7c948; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 14px; }
 .killanim-caption small { font-size: 15px; color: #fcc; }
 .chat-msg.mine, .chat-msg.ghost, .chat-msg.system { background: none; }
+
+/* ===================== EVENTS */
+.event-banner { position: relative; display: flex; align-items: center; gap: 12px; max-width: 640px; width: 100%; margin: -8px 0 16px; padding: 10px 14px; border-radius: 14px; border: 2px solid var(--evc); background: linear-gradient(90deg, color-mix(in srgb, var(--evc) 35%, #12162a), #12162a); box-shadow: 0 0 24px color-mix(in srgb, var(--evc) 40%, transparent); }
+.event-banner .eb-icon { font-size: 34px; animation: boxbob 2s ease-in-out infinite; }
+.event-banner > span:nth-child(2) { display: flex; flex-direction: column; flex: 1; }
+.event-banner small { color: #dfe4f0; }
+.ev-halloween { --evc: #ff7b1c; } .ev-christmas { --evc: #2ecc71; } .ev-summer { --evc: #ffbe2e; }
+body[data-event="halloween"] #screen-menu { background: radial-gradient(ellipse at 50% 30%, #3a1a4a 0%, #0c0612 70%); }
+body[data-event="halloween"] .logo span { color: #ff7b1c; }
+body[data-event="christmas"] #screen-menu { background: radial-gradient(ellipse at 50% 30%, #12304a 0%, #050b14 70%); }
+body[data-event="christmas"] .logo span { color: #ff4757; text-shadow: 0 4px 0 #0a0f22, 0 0 30px rgba(46,204,113,.6); }
+body[data-event="summer"] #screen-menu { background: radial-gradient(ellipse at 50% 30%, #1f6f8b 0%, #0a1d2b 70%); }
+body[data-event="summer"] .logo span { color: #ffbe2e; }
+.cz-tab.event-tab { background: linear-gradient(180deg, #8a4b14, #5c2f0a); border-color: #ffb36b; }
+.cz-tab.event-tab.active { background: linear-gradient(180deg, #ffb36b, #ff7b1c); color: #000; }
+.event-head { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; background: linear-gradient(90deg, color-mix(in srgb, var(--evc, #3a4772) 30%, #0d1222), #0d1222); border: 2px solid var(--evc, #3a4772); border-radius: 12px; padding: 10px 12px; }
+.event-head h3 { margin: 0 0 2px; }
+.event-head p { margin: 0 0 6px; font-size: 13px; color: #dfe4f0; }
+.eh-icon { font-size: 40px; }
+.ev-tag { position: absolute; top: 3px; left: 4px; font-size: 14px; }
+.box-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.box-pick { display: flex; align-items: center; gap: 6px; background: #0d1222; border: 2px solid #3a4772; color: #fff; border-radius: 10px; padding: 6px 12px; font-weight: bold; }
+.box-pick span { font-size: 20px; }
+.box-pick.active { border-color: #b48cff; background: #2b1650; }
+.box-pick.event.active { border-color: #ffb36b; background: #4a2508; }
+.box-hero.ev-halloween { background: linear-gradient(135deg, #4a2508, #12172b); border-color: #ff7b1c; }
+.box-hero.ev-christmas { background: linear-gradient(135deg, #0e3d22, #12172b); border-color: #2ecc71; }
+.box-hero.ev-summer { background: linear-gradient(135deg, #0e4a5c, #12172b); border-color: #ffbe2e; }
+.anim-info p { margin: 0; }

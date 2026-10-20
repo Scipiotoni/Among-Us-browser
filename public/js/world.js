@@ -173,7 +173,7 @@ const World = (() => {
   }
 
   // Screen-space background behind the station, per map theme (cx, cy = camera centre for parallax).
-  const BG = { space: '#05070d', snow: '#c9d6e3', sky: '#7ec4f2', ocean: '#062a40', sand: '#d8b57a', asteroids: '#07060a' };
+  const BG = { space: '#05070d', snow: '#c9d6e3', sky: '#7ec4f2', ocean: '#062a40', sand: '#d8b57a', asteroids: '#07060a', night: '#140a22', winternight: '#0b1530', beach: '#2a9fc4' };
   function background(ctx, theme, W, H, cx, cy, t) {
     const kind = (theme && theme.bg) || 'space';
     ctx.fillStyle = BG[kind] || BG.space;
@@ -214,6 +214,45 @@ const World = (() => {
         const sx = wrap(i * 71.9 - cx * 0.2 + Math.sin(t * 2 + i) * 6, W), sy = wrap(i * 113.1 - cy * 0.2 - t * (20 + (i % 4) * 10), H);
         ctx.beginPath(); ctx.arc(sx, sy, 2 + (i % 4), 0, 7); ctx.stroke();
       }
+    } else if (kind === 'night') {
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      for (let i = 0; i < 70; i++) ctx.fillRect(wrap(i * 137.5 - cx * 0.05, W), wrap(i * 89.3 - cy * 0.05, H), 1.5, 1.5);
+      const mx = W - 140, my = 120;
+      ctx.fillStyle = 'rgba(255,240,200,0.12)'; ctx.beginPath(); ctx.arc(mx, my, 90, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff4d6'; ctx.beginPath(); ctx.arc(mx, my, 55, 0, 7); ctx.fill();
+      ctx.fillStyle = BG.night; ctx.beginPath(); ctx.arc(mx + 22, my - 12, 50, 0, 7); ctx.fill();
+      ctx.fillStyle = '#05020a';
+      for (let i = 0; i < 9; i++) {
+        const bx = wrap(i * 241 + t * (40 + i * 6) - cx * 0.2, W + 100) - 50, by = wrap(i * 113 - cy * 0.2, H) + Math.sin(t * 2 + i) * 20;
+        const f = Math.sin(t * 14 + i) * 7;
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx - 10, by - 8 - f, bx - 20, by - 2 - f); ctx.quadraticCurveTo(bx - 12, by + 2, bx, by + 4);
+        ctx.quadraticCurveTo(bx + 12, by + 2, bx + 20, by - 2 - f); ctx.quadraticCurveTo(bx + 10, by - 8 - f, bx, by); ctx.fill();
+      }
+    } else if (kind === 'winternight') {
+      const colors = ['#ff4757', '#2ed573', '#ffd32a', '#1e90ff'];
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = colors[i % 4]; ctx.globalAlpha = 0.4 + 0.4 * Math.abs(Math.sin(t * 2 + i));
+        ctx.beginPath(); ctx.arc(wrap(i * 173.3 - cx * 0.1, W), wrap(i * 71.7 - cy * 0.1, H), 3, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < 110; i++) {
+        const sx = wrap(i * 97.3 - cx * 0.3 + Math.sin(t + i) * 12, W), sy = wrap(i * 53.7 - cy * 0.3 + t * (25 + (i % 5) * 10), H);
+        ctx.beginPath(); ctx.arc(sx, sy, 1.5 + (i % 3), 0, 7); ctx.fill();
+      }
+    } else if (kind === 'beach') {
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 3;
+      for (let i = 0; i < 26; i++) {
+        const sy = wrap(i * 61 - cy * 0.3, H + 40) - 20, sx = wrap(i * 191 - cx * 0.3 + Math.sin(t + i) * 15, W + 200) - 100;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 25, sy - 8, sx + 50, sy); ctx.quadraticCurveTo(sx + 75, sy + 8, sx + 100, sy); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      for (let i = 0; i < 30; i++) {
+        const k = Math.abs(Math.sin(t * 1.5 + i * 1.3));
+        ctx.fillRect(wrap(i * 149 - cx * 0.3, W), wrap(i * 83 - cy * 0.3, H), 3 * k, 3 * k);
+      }
+      ctx.fillStyle = 'rgba(255,230,120,0.25)'; ctx.beginPath(); ctx.arc(W - 120, 110, 110, 0, 7); ctx.fill();
+      ctx.fillStyle = '#ffe066'; ctx.beginPath(); ctx.arc(W - 120, 110, 60, 0, 7); ctx.fill();
     } else if (kind === 'sand') {
       ctx.strokeStyle = 'rgba(150,105,55,0.35)'; ctx.lineWidth = 3;
       for (let i = 0; i < 18; i++) {

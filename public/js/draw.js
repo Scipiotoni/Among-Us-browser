@@ -122,6 +122,16 @@ const Draw = (() => {
         ellipse(ctx, ex, -33, 11, blink ? 1.5 : 11, '#fff', '#111', 2.5);
         if (!blink) ellipse(ctx, ex + dir * 3, -33, 5, 5, '#111');
         return;
+      case 'glow':
+        ctx.shadowColor = e.c; ctx.shadowBlur = 12;
+        for (const cx of [L, R]) { ellipse(ctx, cx, -33, 6, 7, '#111', '#111', 2); ellipse(ctx, cx + dir * 1.5, -33, 3.5, 4.5, e.c); }
+        ctx.shadowBlur = 0;
+        return;
+      case 'spider':
+        for (const [x, y, r] of [[L, -33, 5], [R, -33, 5], [L - 4, -41, 2.6], [R + 4, -41, 2.6], [L + 4, -41, 2.4], [R - 4, -41, 2.4], [ex, -26, 2.2]]) {
+          ellipse(ctx, x, y, r, r, '#111'); ellipse(ctx, x + dir * r * 0.3, y - r * 0.35, r * 0.3, r * 0.3, '#ff4757');
+        }
+        return;
       case 'void':
         for (const cx of [L, R]) { ellipse(ctx, cx, -33, 6.5, 7.5, '#05030a', '#111', 2); ellipse(ctx, cx + dir * 1.5, -33, 1.8, 1.8, '#fff'); }
         return;
@@ -263,6 +273,10 @@ const Draw = (() => {
         ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
       }
     } else if (o.draw === 'cape') {
+      if (o.c2) {
+        ctx.fillStyle = o.c2;
+        ctx.beginPath(); ctx.moveTo(-dir * 6, -46 - bob); ctx.quadraticCurveTo(-dir * 30, -22, -dir * 22, -8); ctx.lineTo(-dir * 4, -12); ctx.closePath(); ctx.fill();
+      }
       ctx.fillStyle = o.c; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(-dir * 6, -46 - bob);
@@ -352,6 +366,24 @@ const Draw = (() => {
         ellipse(ctx, -10, -18, 2, 2, '#f1c40f'); ellipse(ctx, 10, -18, 2, 2, '#f1c40f');
         ctx.restore(); break;
       case 'pattern': drawPattern(ctx, o.p, t); break;
+      case 'lights':
+        ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-22, -40); ctx.quadraticCurveTo(0, -28, 22, -36); ctx.moveTo(-21, -22); ctx.quadraticCurveTo(0, -12, 21, -20); ctx.stroke();
+        for (let i = 0; i < 10; i++) {
+          const row = i < 5, k = (i % 5) / 4, x = -18 + k * 36, y = row ? -38 + Math.sin(k * Math.PI) * 6 : -20 + Math.sin(k * Math.PI) * 6;
+          const on = Math.sin(t * 5 + i * 1.7) > -0.2;
+          ellipse(ctx, x, y + 3, 2.6, 3.6, on ? ['#ff4757', '#2ed573', '#ffd32a', '#1e90ff'][i % 4] : '#555');
+        }
+        break;
+      case 'floatie':
+        ctx.save(); ctx.translate(0, -12);
+        ellipse(ctx, 0, 0, 30, 9, '#ffd32a', '#111', 2.5);
+        ellipse(ctx, 0, -1, 20, 4, 'rgba(0,0,0,0.25)');
+        ellipse(ctx, dir * 26, -12, 8, 7, '#ffd32a', '#111', 2);
+        ctx.fillStyle = '#ff9f43'; ctx.beginPath(); ctx.moveTo(dir * 32, -12); ctx.lineTo(dir * 40, -10); ctx.lineTo(dir * 32, -8); ctx.fill();
+        ellipse(ctx, dir * 28, -14, 1.5, 1.5, '#111');
+        ctx.restore();
+        break;
       case 'armor':
         ctx.save(); clipBody(ctx);
         ctx.fillStyle = o.c; ctx.fillRect(-25, -24, 50, 24);
@@ -387,6 +419,34 @@ const Draw = (() => {
       case 'rainbow':
         RAINBOW.forEach((r, i) => { ctx.fillStyle = r; ctx.globalAlpha = 0.6; ctx.fillRect(-25, -28 + i * 4, 50, 4); });
         ctx.globalAlpha = 1; break;
+      case 'skeleton':
+        ctx.fillStyle = 'rgba(245,245,240,0.92)';
+        ctx.fillRect(-2, -26, 4, 22);
+        for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(0, -22 + i * 5, 12 - i * 1.5, 1.8, 0, 0, 7); ctx.fill(); }
+        ctx.beginPath(); ctx.ellipse(0, -46, 9, 5, 0, 0, 7); ctx.fill();
+        break;
+      case 'mummy':
+        ctx.strokeStyle = 'rgba(240,232,210,0.9)'; ctx.lineWidth = 4;
+        for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(-26, -52 + i * 9); ctx.lineTo(26, -46 + i * 9 + (i % 2 ? -6 : 4)); ctx.stroke(); }
+        break;
+      case 'sweater':
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(-25, -26, 50, 26);
+        ctx.fillStyle = '#fff'; for (let x = -24; x < 26; x += 6) { ctx.beginPath(); ctx.moveTo(x, -20); ctx.lineTo(x + 3, -23); ctx.lineTo(x + 6, -20); ctx.lineTo(x + 3, -17); ctx.fill(); }
+        ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.moveTo(4, -14); ctx.lineTo(9, -4); ctx.lineTo(-1, -4); ctx.fill();
+        star(ctx, 4, -14, 2.5, '#ffd32a');
+        break;
+      case 'candycane':
+        ctx.fillStyle = '#f5f6fa'; ctx.fillRect(-25, -56, 50, 54);
+        ctx.strokeStyle = '#e84118'; ctx.lineWidth = 5;
+        for (let x = -60; x < 40; x += 12) { ctx.beginPath(); ctx.moveTo(x, -56); ctx.lineTo(x + 40, -2); ctx.stroke(); }
+        break;
+      case 'hawaii':
+        ctx.fillStyle = '#00a8a8'; ctx.fillRect(-25, -28, 50, 28);
+        for (const [x, y, c] of [[-12, -20, '#fd79a8'], [6, -12, '#ffeaa7'], [14, -24, '#ff7675'], [-4, -6, '#fdcb6e']]) for (let k = 0; k < 5; k++) { const b = k / 5 * Math.PI * 2; ellipse(ctx, x + Math.cos(b) * 3, y + Math.sin(b) * 3, 2.5, 2.5, c); }
+        break;
+      case 'stripes':
+        for (let i = 0; i < 7; i++) { ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.75)' : 'rgba(9,132,227,0.75)'; ctx.fillRect(-25, -30 + i * 4.5, 50, 4.5); }
+        break;
       case 'lava':
         ctx.fillStyle = 'rgba(40,10,0,0.55)'; ctx.fillRect(-25, -56, 50, 54);
         ctx.strokeStyle = `rgba(255,${120 + Math.sin(t * 3) * 60},0,0.9)`; ctx.lineWidth = 2.5;
@@ -410,6 +470,8 @@ const Draw = (() => {
     }
     ctx.restore();
   }
+
+  function Draw_bell(ctx, x, y) { ellipse(ctx, x, y, 4.5, 4.5, '#ffd32a', '#111', 1.5); }
 
   // ------------------------------------------------------------------ hats
   function drawHat(ctx, h, dir, t, bodyColor) {
@@ -637,6 +699,14 @@ const Draw = (() => {
         ellipse(ctx, -30, -54, 7, 5, '#fff'); ellipse(ctx, 30, -54, 7, 5, '#fff');
         break;
       case 'orbit': {
+        if (h.sunOnly) {
+          for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + t; ctx.strokeStyle = '#ffb300'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 16, -70 + Math.sin(a) * 16); ctx.lineTo(Math.cos(a) * 23, -70 + Math.sin(a) * 23); ctx.stroke(); }
+          ctx.shadowColor = '#ffd32a'; ctx.shadowBlur = 16;
+          ellipse(ctx, 0, -70, 12, 12, '#ffd32a', '#e1a32a', 2);
+          ctx.shadowBlur = 0;
+          ellipse(ctx, -4, -72, 1.5, 1.5, '#111'); ellipse(ctx, 4, -72, 1.5, 1.5, '#111');
+          break;
+        }
         const planets = [['#f9ca24', 7, 0, 26, 1], ['#74b9ff', 4, 1.6, 34, 1.7], ['#ff7675', 3.5, 3.6, 42, 1.2], ['#55efc4', 3, 5, 30, 2.3]];
         ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
         for (const [, , , r] of planets) { ctx.beginPath(); ctx.ellipse(0, -66, r, r * 0.3, 0, 0, 7); ctx.stroke(); }
@@ -649,6 +719,68 @@ const Draw = (() => {
         ellipse(ctx, 0, -66, 8, 8, '#ffd32a', '#111', 1.5);
         break;
       }
+      case 'pumpkin': {
+        ctx.beginPath(); ctx.ellipse(0, -60, 26, 19, 0, 0, 7); P('#ff7b1c');
+        ctx.strokeStyle = 'rgba(120,50,0,0.6)'; ctx.lineWidth = 2;
+        for (const x of [-9, 0, 9]) { ctx.beginPath(); ctx.ellipse(x, -60, 6, 18, 0, 0, 7); ctx.stroke(); }
+        ctx.fillStyle = '#ffe066';
+        ctx.beginPath(); ctx.moveTo(dir * 2 - 13, -64); ctx.lineTo(dir * 2 - 7, -70); ctx.lineTo(dir * 2 - 3, -63); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(dir * 2 + 3, -63); ctx.lineTo(dir * 2 + 7, -70); ctx.lineTo(dir * 2 + 13, -64); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(dir * 2 - 12, -55); for (let i = 0; i <= 6; i++) ctx.lineTo(dir * 2 - 12 + i * 4, -55 + (i % 2 ? 4 : 0)); ctx.lineTo(dir * 2 + 12, -51); ctx.lineTo(dir * 2 - 12, -51); ctx.fill();
+        ctx.fillStyle = '#2d6a1f'; ctx.fillRect(-2, -84, 5, 7);
+        break;
+      }
+      case 'candycorn':
+        ctx.save(); ctx.beginPath(); ctx.moveTo(-14, -50); ctx.lineTo(dir * 2, -84); ctx.lineTo(14, -50); ctx.closePath(); ctx.clip();
+        ctx.fillStyle = '#ffd32a'; ctx.fillRect(-20, -62, 40, 14); ctx.fillStyle = '#ff7b1c'; ctx.fillRect(-20, -73, 40, 11); ctx.fillStyle = '#fff'; ctx.fillRect(-20, -90, 40, 17);
+        ctx.restore();
+        ctx.beginPath(); ctx.moveTo(-14, -50); ctx.lineTo(dir * 2, -84); ctx.lineTo(14, -50); ctx.closePath(); ctx.stroke();
+        break;
+      case 'bathat':
+        for (const sx of [-1, 1]) {
+          ctx.beginPath(); ctx.moveTo(sx * 6, -52); ctx.lineTo(sx * 12, -72); ctx.lineTo(sx * 22, -62); ctx.lineTo(sx * 30, -66); ctx.lineTo(sx * 26, -52); ctx.closePath(); P('#2d1b3d');
+        }
+        break;
+      case 'elf':
+        ctx.beginPath(); ctx.moveTo(-17, -52); ctx.quadraticCurveTo(-6, -70, -dir * 26, -86); ctx.quadraticCurveTo(8, -72, 17, -52); ctx.closePath(); P('#1e9e4a');
+        ctx.beginPath(); ctx.roundRect(-19, -56, 38, 8, 4); P('#d63031');
+        Draw_bell(ctx, -dir * 26, -86);
+        break;
+      case 'reindeer':
+        ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 3.5;
+        for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 9, -51); ctx.lineTo(sx * 15, -72); ctx.moveTo(sx * 12, -62); ctx.lineTo(sx * 21, -66); ctx.moveTo(sx * 14, -69); ctx.lineTo(sx * 9, -76); ctx.stroke(); }
+        ctx.lineWidth = 2; ctx.strokeStyle = '#111';
+        ctx.beginPath(); ctx.arc(dir * 18, -26, 5, 0, 7); ctx.fillStyle = Math.sin(t * 4) > -0.3 ? '#ff3b3b' : '#c0392b'; ctx.fill(); ctx.stroke();
+        break;
+      case 'startopper':
+        ctx.shadowColor = '#ffe066'; ctx.shadowBlur = 14 + Math.sin(t * 4) * 6;
+        star(ctx, 0, -66, 14, '#ffd32a');
+        ctx.shadowBlur = 0; ctx.lineWidth = 1.5; ctx.stroke();
+        break;
+      case 'sunhat':
+        ctx.beginPath(); ctx.ellipse(0, -52, 36, 8, 0, 0, 7); P('#f6e3a1');
+        ctx.beginPath(); ctx.ellipse(0, -55, 16, 13, 0, Math.PI, 0); ctx.closePath(); P('#f6e3a1');
+        ctx.fillStyle = '#ff6b81'; ctx.fillRect(-16, -58, 32, 5);
+        ellipse(ctx, dir * 14, -58, 4, 4, '#ffd32a', '#111', 1.5);
+        break;
+      case 'watermelon':
+        ctx.beginPath(); ctx.ellipse(0, -52, 20, 18, 0, Math.PI, 0); ctx.closePath(); P('#2ecc71');
+        ctx.beginPath(); ctx.ellipse(0, -52, 16, 14, 0, Math.PI, 0); ctx.closePath(); ctx.fillStyle = '#ff6b81'; ctx.fill();
+        ctx.fillStyle = '#111'; for (const [x, y] of [[-8, -57], [0, -62], [8, -57], [-3, -55], [4, -55]]) { ctx.beginPath(); ctx.ellipse(x, y, 1.4, 2.4, 0, 0, 7); ctx.fill(); }
+        break;
+      case 'flowercrown':
+        for (let i = 0; i < 7; i++) {
+          const a = Math.PI * (1.15 + i * 0.12), x = Math.cos(a) * 21, y = -36 + Math.sin(a) * 21;
+          for (let k = 0; k < 5; k++) { const b = k / 5 * Math.PI * 2; ellipse(ctx, x + Math.cos(b) * 3, y + Math.sin(b) * 3, 2.6, 2.6, ['#fd79a8', '#ffeaa7', '#a29bfe', '#ff7675'][i % 4]); }
+          ellipse(ctx, x, y, 1.8, 1.8, '#fdcb6e');
+        }
+        break;
+      case 'snorkel':
+        ctx.fillStyle = 'rgba(116,185,255,0.45)'; ctx.strokeStyle = '#0984e3'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(dir * 5 - 19, -42, 38, 17, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ffd32a'; ctx.fillRect(-dir * 20 - 2, -70, 5, 34); ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5; ctx.strokeRect(-dir * 20 - 2, -70, 5, 34);
+        ctx.fillStyle = '#ff7675'; ctx.fillRect(-dir * 20 - 3, -72, 7, 5);
+        break;
       case 'raincloud': {
         const y = -84 + Math.sin(t * 2) * 2;
         ctx.fillStyle = '#9aa5b1';
@@ -771,6 +903,67 @@ const Draw = (() => {
         const c = col(ownerColor);
         ellipse(ctx, -5, -2, 5, 4, c.shade, '#111', 2); ellipse(ctx, 5, -2, 5, 4, c.shade, '#111', 2);
         ellipse(ctx, 0, -16, 14, 14, c.body, '#111'); eyes(-18, 4);
+        break;
+      }
+      case 'bat': {
+        fly(5, -26);
+        const f = Math.sin(t * 12) * 8;
+        for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 6, -2); ctx.quadraticCurveTo(sx * 16, -12 - f, sx * 26, -4 - f); ctx.quadraticCurveTo(sx * 18, 0, sx * 6, 4); ctx.fillStyle = '#2d1b3d'; ctx.fill(); ctx.stroke(); }
+        ellipse(ctx, 0, 0, 9, 8, '#3d2a4f', '#111', 2);
+        ellipse(ctx, dir * 2 - 3, -1, 1.6, 1.8, '#ff4757'); ellipse(ctx, dir * 2 + 3, -1, 1.6, 1.8, '#ff4757');
+        break;
+      }
+      case 'pumpkinpet':
+        ellipse(ctx, 0, -12, 16, 12, '#ff7b1c', '#111');
+        ctx.strokeStyle = 'rgba(120,50,0,0.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, -12, 6, 12, 0, 0, 7); ctx.stroke();
+        ctx.fillStyle = '#ffe066'; ctx.beginPath(); ctx.moveTo(dir * 3 - 8, -16); ctx.lineTo(dir * 3 - 4, -20); ctx.lineTo(dir * 3 - 1, -15); ctx.moveTo(dir * 3 + 1, -15); ctx.lineTo(dir * 3 + 4, -20); ctx.lineTo(dir * 3 + 8, -16); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(dir * 3, -8, 6, 2.5, 0, 0, Math.PI); ctx.fill();
+        ctx.fillStyle = '#2d6a1f'; ctx.fillRect(-2, -28, 4, 5);
+        break;
+      case 'gingerbread':
+        ctx.fillStyle = '#b5651d'; ctx.strokeStyle = '#111';
+        ctx.beginPath(); ctx.arc(0, -26, 8, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(-8, -19, 16, 17, 5); ctx.fill(); ctx.stroke();
+        ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.strokeStyle = '#b5651d';
+        ctx.beginPath(); ctx.moveTo(-8, -15); ctx.lineTo(-14, -9 + (moving ? Math.sin(t * 12) * 3 : 0)); ctx.moveTo(8, -15); ctx.lineTo(14, -9 - (moving ? Math.sin(t * 12) * 3 : 0)); ctx.moveTo(-4, -3); ctx.lineTo(-6, 2); ctx.moveTo(4, -3); ctx.lineTo(6, 2); ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-6, -10); ctx.lineTo(6, -10); ctx.stroke();
+        ellipse(ctx, dir * 2 - 3, -27, 1.5, 1.5, '#fff'); ellipse(ctx, dir * 2 + 3, -27, 1.5, 1.5, '#fff');
+        ellipse(ctx, 0, -14, 1.8, 1.8, '#ff4757'); ellipse(ctx, 0, -7, 1.8, 1.8, '#2ed573');
+        break;
+      case 'snowmanpet':
+        ellipse(ctx, 0, -8, 12, 10, '#fff', '#111', 2); ellipse(ctx, 0, -24, 9, 8, '#fff', '#111', 2);
+        ellipse(ctx, dir * 2 - 3, -26, 1.5, 1.5, '#111'); ellipse(ctx, dir * 2 + 3, -26, 1.5, 1.5, '#111');
+        ctx.fillStyle = '#ff9f43'; ctx.beginPath(); ctx.moveTo(dir * 3, -23); ctx.lineTo(dir * 12, -22); ctx.lineTo(dir * 3, -21); ctx.fill();
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9, -18, 18, 3);
+        ctx.fillStyle = '#2d3436'; ctx.fillRect(-7, -38, 14, 8); ctx.fillRect(-10, -31, 20, 2);
+        break;
+      case 'crab': {
+        const sc = moving ? Math.sin(t * 16) * 2 : 0;
+        ellipse(ctx, 0, -9, 15, 9, '#ff6b4a', '#111', 2);
+        for (const sx of [-1, 1]) {
+          ellipse(ctx, sx * 20, -16 + sc * sx, 6, 5, '#ff6b4a', '#111', 1.5);
+          ctx.beginPath(); for (let k = 0; k < 3; k++) { ctx.moveTo(sx * 9, -5 + k * 2); ctx.lineTo(sx * 17, 0 + k * 2); } ctx.stroke();
+        }
+        ctx.beginPath(); ctx.moveTo(-4, -17); ctx.lineTo(-5, -23); ctx.moveTo(4, -17); ctx.lineTo(5, -23); ctx.stroke();
+        ellipse(ctx, -5, -24, 2.2, 2.2, '#fff', '#111', 1); ellipse(ctx, 5, -24, 2.2, 2.2, '#fff', '#111', 1);
+        break;
+      }
+      case 'dolphin': {
+        fly(4, -14);
+        ctx.save(); ctx.rotate(Math.sin(t * 3) * 0.15 * dir);
+        ctx.beginPath(); ctx.moveTo(-dir * 20, -2); ctx.quadraticCurveTo(-dir * 4, -18, dir * 16, -8); ctx.quadraticCurveTo(dir * 22, -4, dir * 16, 0); ctx.quadraticCurveTo(0, 6, -dir * 20, -2); ctx.fillStyle = '#74b9ff'; ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(-dir * 4, -20); ctx.lineTo(-dir * 6, -10); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-dir * 20, -2); ctx.lineTo(-dir * 28, -8); ctx.lineTo(-dir * 26, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ellipse(ctx, dir * 10, -8, 1.6, 1.6, '#111');
+        ctx.restore();
+        break;
+      }
+      case 'beachball': {
+        const bounce = Math.abs(Math.sin(t * 5)) * 8;
+        ctx.translate(0, -bounce); ctx.rotate(t * 3 * dir);
+        const cols = ['#ff4757', '#fff', '#1e90ff', '#fff', '#ffd32a', '#fff'];
+        for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(0, -12); ctx.arc(0, -12, 12, i * Math.PI / 3, (i + 1) * Math.PI / 3); ctx.closePath(); ctx.fillStyle = cols[i]; ctx.fill(); }
+        ctx.beginPath(); ctx.arc(0, -12, 12, 0, 7); ctx.stroke();
         break;
       }
       case 'blackhole': {

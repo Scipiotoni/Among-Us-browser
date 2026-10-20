@@ -363,6 +363,67 @@
     links: [['drill', 'relay'], ['relay', 'ops'], ['drill', 'thrusters'], ['relay', 'breakroom'], ['ops', 'assay'], ['thrusters', 'breakroom'], ['breakroom', 'assay'], ['thrusters', 'grid'], ['assay', 'scrubbers'], ['grid', 'breakroom'], ['breakroom', 'scrubbers'], ['grid', 'ore'], ['ore', 'security'], ['security', 'medical'], ['medical', 'loader'], ['scrubbers', 'loader'], ['breakroom', 'security'], ['breakroom', 'medical']],
   });
 
+  // ---------------------------------------------------------------- event maps
+  const MANOR = gridMap({
+    id: 'manor', name: 'Haunted Manor', hub: 'foyer',
+    theme: { bg: 'night', outer: '#120b1a', wall: '#3d2a4f', wallTop: '#6c4f86', corridor: '#3a2e45', floors: ['#4a3a52', '#45354a', '#503a46', '#3f3a52'] },
+    rooms: [
+      { id: 'belltower', name: 'Bell Tower', role: 'security', c: 0, r: 0, s: 0.85 },
+      { id: 'library', name: 'Library', role: 'bridge', c: 1, r: 0, w: 2 },
+      { id: 'seance', name: 'Séance Room', role: 'comms', c: 3, r: 0 },
+      { id: 'apothecary', name: 'Apothecary', role: 'medbay', c: 0, r: 1 },
+      { id: 'foyer', name: 'Grand Foyer', role: 'mess', c: 1, r: 1, w: 2 },
+      { id: 'madlab', name: 'Mad Lab', role: 'lab', c: 3, r: 1 },
+      { id: 'crypt', name: 'Crypt', role: 'reactor', c: 0, r: 2 },
+      { id: 'cellar', name: 'Fuse Cellar', role: 'elec', c: 1, r: 2 },
+      { id: 'attic', name: 'Attic', role: 'storage', c: 2, r: 2 },
+      { id: 'garden', name: 'Overgrown Garden', role: 'ls', c: 3, r: 2 },
+      { id: 'furnace', name: 'Furnace', role: 'engine', c: 0, r: 3, s: 0.85 },
+      { id: 'carriage', name: 'Carriage House', role: 'cargo', c: 1, r: 3, w: 2 },
+    ],
+    links: [['belltower', 'library'], ['library', 'seance'], ['belltower', 'apothecary'], ['library', 'foyer'], ['seance', 'madlab'], ['apothecary', 'foyer'], ['foyer', 'madlab'], ['apothecary', 'crypt'], ['foyer', 'attic'], ['madlab', 'garden'], ['crypt', 'cellar'], ['cellar', 'attic'], ['attic', 'garden'], ['crypt', 'furnace'], ['furnace', 'carriage'], ['cellar', 'carriage']],
+  });
+
+  const WORKSHOP = gridMap({
+    id: 'workshop', name: "Santa's Workshop", hub: 'hall',
+    theme: { bg: 'winternight', outer: '#0f1a14', wall: '#7a1f2b', wallTop: '#c0392b', corridor: '#4a3b30', floors: ['#5a4636', '#4f5a3e', '#5c3f3f', '#4d4a3a'] },
+    rooms: [
+      { id: 'letters', name: 'Letter Room', role: 'comms', c: 0, r: 0, s: 0.85 },
+      { id: 'sleigh', name: 'Sleigh Control', role: 'bridge', c: 1, r: 0 },
+      { id: 'treefarm', name: 'Tree Farm', role: 'ls', c: 2, r: 0 },
+      { id: 'clinic', name: 'Cozy Clinic', role: 'medbay', c: 3, r: 0, s: 0.85 },
+      { id: 'toylab', name: 'Toy Lab', role: 'lab', c: 4, r: 0 },
+      { id: 'furnace', name: 'Furnace Core', role: 'reactor', c: 0, r: 1 },
+      { id: 'hall', name: 'Great Hall', role: 'mess', c: 1, r: 1, w: 3 },
+      { id: 'naughty', name: 'Naughty List Office', role: 'security', c: 4, r: 1, s: 0.85 },
+      { id: 'garage', name: 'Sleigh Garage', role: 'engine', c: 0, r: 2 },
+      { id: 'lightroom', name: 'Light Room', role: 'elec', c: 1, r: 2 },
+      { id: 'gifts', name: 'Gift Storage', role: 'storage', c: 2, r: 2 },
+      { id: 'wrapping', name: 'Wrapping Station', role: 'cargo', c: 3, r: 2, w: 2 },
+    ],
+    links: [['letters', 'sleigh'], ['sleigh', 'treefarm'], ['treefarm', 'clinic'], ['clinic', 'toylab'], ['letters', 'furnace'], ['furnace', 'hall'], ['hall', 'naughty'], ['toylab', 'naughty'], ['sleigh', 'hall'], ['clinic', 'hall'], ['furnace', 'garage'], ['garage', 'lightroom'], ['lightroom', 'gifts'], ['gifts', 'wrapping'], ['naughty', 'wrapping'], ['hall', 'gifts']],
+  });
+
+  const BEACH = gridMap({
+    id: 'beach', name: 'Beach Resort', hub: 'pool',
+    theme: { bg: 'beach', outer: '#b8955e', wall: '#e8d3a6', wallTop: '#fff3d6', corridor: '#a88d62', floors: ['#4f7f8c', '#5c8a7a', '#6b7f92', '#4d8a8f'] },
+    rooms: [
+      { id: 'lifeguard', name: 'Lifeguard HQ', role: 'bridge', c: 0, r: 0 },
+      { id: 'radio', name: 'Radio Shack', role: 'comms', c: 1, r: 0 },
+      { id: 'watch', name: 'Watchtower', role: 'security', c: 2, r: 0, s: 0.85 },
+      { id: 'firstaid', name: 'First Aid Hut', role: 'medbay', c: 0, r: 1, s: 0.85 },
+      { id: 'pool', name: 'Pool Deck', role: 'mess', c: 1, r: 1, h: 2 },
+      { id: 'smoothie', name: 'Smoothie Bar', role: 'ls', c: 2, r: 1 },
+      { id: 'generator', name: 'Generator Shed', role: 'reactor', c: 0, r: 2 },
+      { id: 'aquarium', name: 'Aquarium', role: 'lab', c: 2, r: 2, s: 0.85 },
+      { id: 'fusehut', name: 'Fuse Hut', role: 'elec', c: 0, r: 3 },
+      { id: 'surf', name: 'Surf Shop', role: 'storage', c: 1, r: 3 },
+      { id: 'boathouse', name: 'Boat House', role: 'engine', c: 2, r: 3 },
+      { id: 'pier', name: 'Pier', role: 'cargo', c: 0, r: 4, w: 3, s: 0.9 },
+    ],
+    links: [['lifeguard', 'radio'], ['radio', 'watch'], ['lifeguard', 'firstaid'], ['radio', 'pool'], ['watch', 'smoothie'], ['firstaid', 'pool'], ['pool', 'smoothie'], ['firstaid', 'generator'], ['pool', 'aquarium'], ['smoothie', 'aquarium'], ['generator', 'pool'], ['generator', 'fusehut'], ['pool', 'surf'], ['aquarium', 'boathouse'], ['fusehut', 'surf'], ['surf', 'boathouse'], ['fusehut', 'pier'], ['surf', 'pier'], ['boathouse', 'pier']],
+  });
+
   // ---------------------------------------------------------------- helpers
   function buildMap(def) {
     const roomById = {};
@@ -457,7 +518,8 @@
   return {
     MAPS: {
       helix: buildMap(HELIX), polar: buildMap(POLAR), skylab: buildMap(SKYLAB),
-      deepsea: buildMap(DEEPSEA), desert: buildMap(DESERT), mine: buildMap(MINE), lobby: buildMap(LOBBY),
+      deepsea: buildMap(DEEPSEA), desert: buildMap(DESERT), mine: buildMap(MINE),
+      manor: buildMap(MANOR), workshop: buildMap(WORKSHOP), beach: buildMap(BEACH), lobby: buildMap(LOBBY),
     },
     TASKS,
   };

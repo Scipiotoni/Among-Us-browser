@@ -16,6 +16,7 @@
     <div class="stars"></div>
     <h1 class="logo">BROWSER<span>IMPOSTER</span></h1>
     <p class="tagline">Find the impostors before they find you.</p>
+    <div id="event-banner" class="hidden"></div>
     <div class="menu-card">
       <div class="menu-left">
         <canvas id="menu-preview" width="200" height="220"></canvas>
@@ -174,6 +175,7 @@
             <button class="cz-tab" data-tab="outfit">Outfit</button>
             <button class="cz-tab" data-tab="pet">Pet</button>
             <button class="cz-tab" data-tab="anim">✨ Kill FX</button>
+            <button class="cz-tab event-tab" data-tab="event">🎉 Event</button>
             <button class="cz-tab box-tab" data-tab="box">🎁 Boxes</button>
           </div>
           <div class="cz-filters">
@@ -275,7 +277,9 @@
         <p>At the end of every game you earn cookies: <b>+2</b> per task step, <b>+20</b> for winning, <b>+4</b> per kill as an Impostor, and <b>+5</b> for playing (games over 1 minute). Spend them in the <b>Shop</b> on hats, eyes, outfits and pets. Lots of items are free! Log in to keep your cookies on every device; guests' cookies stay in their browser.</p>
         <h3>Mystery Boxes 🎁</h3>
         <p>In the Shop, open a <b>Mystery Box</b> for 🍪 150 to spin for one of 28 exclusive items you can't buy: <b style="color:#3498db">Rare</b> 61%, <b style="color:#a55eea">Epic</b> 27%, <b style="color:#f7b731">Legendary</b> 9%, <b style="color:#ff4757">Mythic</b> 2%. Duplicates give 🍪 60 back. Click the spinning strip to skip the animation.</p>
-        <p>The rarest prize (1%) is the gold <b style="color:#e4ae39">★ Kill Animations</b>: equip it in the Shop's ✨ Kill FX tab and every kill plays a random cartoon finisher (laser zap, anvil, black hole, rocket, freeze ray, UFO, banana peel, or boxing glove).</p>
+        <p>The rarest prizes (1%) are gold <b style="color:#e4ae39">★ Kill Animations</b>, each one its own prize: unbox one and you keep that animation forever. Equip your favorite in the Shop's ✨ Kill FX tab and it plays every time you eliminate someone.</p>
+        <h3>Events 🎉</h3>
+        <p>Three two-week events a year: <b>🎃 Halloween</b> (Oct 18–31), <b>🎄 Christmas</b> (Dec 12–25) and <b>🏖️ Summer Kickoff</b> (Jun 21–Jul 4). Each brings its own map, event shop, event box and kill animations. Event items stay yours forever.</p>
         <h3>Maps 🗺️</h3>
         <p>The host picks the map in Settings: Station Helix, Polar Base, Skyport, Abyss Station, Dune Outpost, Asteroid Mine, or Random.</p>
         <h3>Chat 💬</h3>
@@ -292,6 +296,7 @@
   <div id="toasts"></div>
 
   <script src="js/config.js"></script>
+  <script src="shared/events.js"></script>
   <script src="shared/constants.js"></script>
   <script src="shared/cosmetics.js"></script>
   <script src="js/mqtt.js"></script>

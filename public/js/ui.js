@@ -46,6 +46,7 @@ const UI = (() => {
     $('btn-browse').onclick = () => browse();
     $('btn-help').onclick = () => openModal('modal-help');
     $('btn-cloak').onclick = openCloak;
+    renderEventBanner();
     $('btn-cloak2').onclick = openCloak;
     initAccount();
     const pv = $('menu-preview');
@@ -118,6 +119,19 @@ const UI = (() => {
     openModal('modal-cloak');
   }
 
+  function renderEventBanner() {
+    const ev = SHARED.activeEvent();
+    const b = $('event-banner');
+    document.body.dataset.event = ev ? ev.id : '';
+    if (!ev) { b.classList.add('hidden'); return; }
+    const days = Math.max(1, Math.ceil((SHARED.eventEnds(ev) - new Date()) / 86400000));
+    b.className = 'event-banner ev-' + ev.id;
+    b.innerHTML = `<span class="eb-icon">${ev.icon}</span><span><b>${esc(ev.name)} Event</b><small>${days} day${days === 1 ? '' : 's'} left · new map, cosmetics, box & kill animations</small></span>`;
+    const go = el('button', 'btn small', 'Event shop');
+    go.onclick = () => { czTab = 'event'; openCustomize(); };
+    b.appendChild(go);
+  }
+
   function browse() {
     const box = $('lobby-list');
     box.classList.remove('hidden');
@@ -179,40 +193,50 @@ const UI = (() => {
     grid.classList.toggle('box-mode', czTab === 'box');
     if (czTab === 'box') { $('cz-buy-box').classList.add('hidden'); renderBoxTab(grid); return; }
     if (czTab === 'anim') {
-      const info = el('div', 'anim-info', `<b>★ Kill Animations</b> is a 1% <span style="color:${SHARED.RARITIES.special.color}">Rare Special</span> prize from Mystery Boxes. Equip it and every kill plays one of ${SHARED.KILL_ANIMS.length} random animations for you and your victim.`);
-      const pv = el('button', 'btn small', '▶ Preview an animation');
-      pv.onclick = () => previewKillAnim();
+      const n = Object.keys(SHARED.KILL_ANIMS).length;
+      const info = el('div', 'anim-info', `<p>Every kill animation is its own <span style="color:${SHARED.RARITIES.special.color}">★ Rare Special</span> prize (1% per box). Unbox one and it's yours forever, so equip your favorite and it plays every time you eliminate someone. ${n} to collect, including event exclusives.</p>`);
+      const pv = el('button', 'btn small', '▶ Preview');
+      pv.onclick = () => {
+        const pick = (czPreview && czPreview.cat === 'anim' && czPreview.id) || (App.profile.anim !== 'none' && App.profile.anim);
+        previewKillAnim(pick ? SHARED.COSMETIC_BY_ID.anim[pick].anim : null);
+      };
       info.appendChild(pv);
       grid.appendChild(info);
     }
-    const list = czTab === 'color' ? C.COLORS : SHARED.COSMETICS[czTab];
+    const ev = SHARED.activeEvent();
+    const list = czTab === 'color' ? C.COLORS : czTab === 'event'
+      ? Object.entries(SHARED.COSMETICS).flatMap(([cat, items]) => items.filter((it) => it.event === (ev ? ev.id : null)).map((it) => ({ ...it, cat })))
+      : SHARED.COSMETICS[czTab].filter((it) => !it.event || ev && it.event === ev.id || Wallet.owns(czTab, it.id));
+    if (czTab === 'event') grid.appendChild(eventHeader(ev));
     const taken = new Set(App.room ? App.room.players.filter((p) => p.id !== App.myId).map((p) => p.color) : []);
     if (czTab !== 'color') {
-      const owned = list.filter((it) => Wallet.owns(czTab, it.id)).length;
+      const owned = list.filter((it) => Wallet.owns(it.cat || czTab, it.id)).length;
       $('cz-owned-count').textContent = `${owned} / ${list.length} owned`;
     }
     for (const it of list) {
-      const owned = Wallet.owns(czTab, it.id);
+      const cat = it.cat || czTab;
+      const owned = Wallet.owns(cat, it.id);
       if (czTab !== 'color' && ((czFilter === 'owned' && !owned) || (czFilter === 'shop' && (owned || it.price == null)))) continue;
-      const sel = App.profile[czTab] === it.id;
-      const previewing = czPreview && czPreview.cat === czTab && czPreview.id === it.id;
+      const sel = App.profile[cat] === it.id;
+      const previewing = czPreview && czPreview.cat === cat && czPreview.id === it.id;
       const b = el('button', 'cz-item' + (sel ? ' selected' : '') + (owned ? '' : ' locked') + (previewing ? ' previewing' : ''));
       b.title = it.name;
       if (it.rarity) { b.classList.add('rarity'); b.style.setProperty('--rar', SHARED.RARITIES[it.rarity].color); }
+      if (it.event) { const E = SHARED.EVENTS.find((e) => e.id === it.event); b.appendChild(el('span', 'ev-tag', E.icon)); }
       if (czTab === 'color') {
         const c = Draw.col(it.id);
         b.style.background = `linear-gradient(160deg, ${c.body}, ${c.shade})`;
         b.classList.add('swatch');
         if (taken.has(it.id)) { b.classList.add('taken'); b.disabled = true; }
       } else {
-        b.appendChild(itemArt(czTab, it.id, 72));
+        b.appendChild(itemArt(cat, it.id, 72));
         b.appendChild(el('small', '', esc(it.name)));
         if (it.rarity) b.appendChild(el('span', 'cz-price rar', owned ? `✓ ${SHARED.RARITIES[it.rarity].name}` : `🎁 ${SHARED.RARITIES[it.rarity].name}`));
         else b.appendChild(el('span', 'cz-price ' + (owned ? (it.price ? 'owned' : 'free') : ''), owned ? (it.price ? '✓' : 'FREE') : `🍪 ${it.price}`));
       }
       b.onclick = () => {
-        if (owned) { czPreview = null; App.setProfile({ [czTab]: it.id }); }
-        else czPreview = { cat: czTab, id: it.id };
+        if (owned) { czPreview = null; App.setProfile({ [cat]: it.id }); }
+        else czPreview = { cat, id: it.id };
         Sfx.click();
         renderCzGrid();
       };
@@ -223,9 +247,13 @@ const UI = (() => {
     if (czPreview) {
       const it = SHARED.COSMETIC_BY_ID[czPreview.cat][czPreview.id];
       $('cz-buy-name').innerHTML = `<b>${esc(it.name)}</b>` + (it.rarity ? ` <span style="color:${SHARED.RARITIES[it.rarity].color}">${SHARED.RARITIES[it.rarity].name}</span>` : '');
+      const E = it.event && SHARED.EVENTS.find((e) => e.id === it.event);
       if (it.price == null) {
         $('cz-buy').disabled = true;
-        $('cz-buy').textContent = '🎁 Only from Mystery Boxes';
+        $('cz-buy').textContent = E ? `${E.icon} Only from the ${SHARED.BOXES[E.id].name}` : '🎁 Only from Mystery Boxes';
+      } else if (!Wallet.forSale(czPreview.cat, czPreview.id)) {
+        $('cz-buy').disabled = true;
+        $('cz-buy').textContent = `${E.icon} Only during the ${E.name} event`;
       } else {
         const afford = Wallet.cookies >= it.price;
         $('cz-buy').disabled = !afford;
@@ -235,31 +263,67 @@ const UI = (() => {
   }
 
   // ------------------------------------------------------------------ mystery boxes
+  let czBox = 'mystery';
+  function availableBoxes() {
+    const ev = SHARED.activeEvent();
+    return Object.values(SHARED.BOXES).filter((b) => !b.event || (ev && ev.id === b.event));
+  }
   function renderBoxTab(grid) {
-    const B = SHARED.BOX, RAR = SHARED.RARITIES;
-    const owned = SHARED.BOX_POOL.filter((x) => Wallet.owns(x.cat, x.item.id)).length;
+    const boxes = availableBoxes();
+    if (!boxes.some((b) => b.id === czBox)) czBox = 'mystery';
+    const B = SHARED.BOXES[czBox], RAR = SHARED.RARITIES, pool = SHARED.BOX_POOLS[czBox];
+    const owned = pool.filter((x) => Wallet.owns(x.cat, x.item.id)).length;
     const panel = el('div', 'box-panel');
-    panel.innerHTML = `
-      <div class="box-hero"><div class="box-art">🎁</div>
-        <div><h3>Mystery Box</h3><p class="muted">Win one of ${SHARED.BOX_POOL.length} exclusive items you can't buy anywhere. Duplicates give back 🍪 ${B.duplicateRefund}.</p>
-        <div class="box-odds">${Object.values(RAR).map((r) => `<span style="--rar:${r.color}">${r.name} ${r.chance}%</span>`).join('')}</div></div></div>`;
+    if (boxes.length > 1) {
+      const pick = el('div', 'box-picker');
+      for (const b of boxes) {
+        const t = el('button', 'box-pick' + (b.id === czBox ? ' active' : '') + (b.event ? ' event' : ''), `<span>${b.icon}</span>${esc(b.name)}`);
+        t.onclick = () => { czBox = b.id; renderCzGrid(); };
+        pick.appendChild(t);
+      }
+      panel.appendChild(pick);
+    }
+    const tiers = Object.entries(RAR).filter(([k]) => pool.some((x) => x.item.rarity === k));
+    const hero = el('div', 'box-hero' + (B.event ? ' ev-' + B.event : ''));
+    hero.innerHTML = `<div class="box-art">${B.icon}</div>
+        <div><h3>${esc(B.name)}</h3><p class="muted">Win one of ${pool.length} exclusive items you can't buy${B.event ? ', only while the event runs' : ' anywhere'}. Duplicates give back 🍪 ${B.duplicateRefund}.</p>
+        <div class="box-odds">${tiers.map(([, r]) => `<span style="--rar:${r.color}">${r.name}</span>`).join('')}</div></div>`;
     const btn = el('button', 'btn primary big box-open', Wallet.cookies >= B.price ? `Open for 🍪 ${B.price}` : `Need 🍪 ${B.price - Wallet.cookies} more`);
     btn.disabled = Wallet.cookies < B.price;
-    btn.onclick = () => openBox();
-    panel.querySelector('.box-hero > div:last-child').appendChild(btn);
-    panel.appendChild(el('div', 'box-loot-head', `Possible loot <span class="muted">${owned} / ${SHARED.BOX_POOL.length} collected</span>`));
+    btn.onclick = () => openBox(czBox);
+    hero.querySelector('div:last-child').appendChild(btn);
+    panel.appendChild(hero);
+    panel.appendChild(el('div', 'box-loot-head', `Possible loot <span class="muted">${owned} / ${pool.length} collected</span>`));
     const loot = el('div', 'box-loot');
-    for (const r of ['mythic', 'legendary', 'epic', 'rare']) {
-      for (const x of SHARED.BOX_POOL.filter((y) => y.item.rarity === r)) loot.appendChild(lootCard(x, Wallet.owns(x.cat, x.item.id)));
+    for (const r of ['special', 'mythic', 'legendary', 'epic', 'rare']) {
+      for (const x of pool.filter((y) => y.item.rarity === r)) loot.appendChild(lootCard(x, Wallet.owns(x.cat, x.item.id)));
     }
     panel.appendChild(loot);
     grid.appendChild(panel);
   }
 
+  // Top of the Event tab: what's on now, or when the next event starts.
+  function eventHeader(ev) {
+    const h = el('div', 'event-head' + (ev ? ' ev-' + ev.id : ''));
+    if (ev) {
+      const days = Math.max(1, Math.ceil((SHARED.eventEnds(ev) - new Date()) / 86400000));
+      const map = C.MAP_CHOICES.find((m) => m.event === ev.id);
+      h.innerHTML = `<div class="eh-icon">${ev.icon}</div><div><h3>${esc(ev.name)} Event</h3><p>${days} day${days === 1 ? '' : 's'} left! Buy event items below, open the <b>${esc(SHARED.BOXES[ev.id].name)}</b>, and play the <b>${esc(map.name)}</b> map. Event items stay yours forever.</p></div>`;
+      const go = el('button', 'btn small', `${ev.icon} Open ${esc(SHARED.BOXES[ev.id].name)}`);
+      go.onclick = () => { czTab = 'box'; czBox = ev.id; renderCzGrid(); };
+      h.lastChild.appendChild(go);
+    } else {
+      const next = SHARED.nextEvent();
+      h.innerHTML = `<div class="eh-icon">📅</div><div><h3>No event right now</h3><p>${next ? `${next.event.icon} <b>${esc(next.event.name)}</b> starts in ${next.days} day${next.days === 1 ? '' : 's'}.` : ''} Events run for two weeks with their own map, shop and box. Your event items are in their normal tabs.</p></div>`;
+    }
+    return h;
+  }
+
+  const ANIM_ICONS = { zap: '⚡', anvil: '🔨', blackhole: '🕳️', rocket: '🚀', freeze: '🧊', ufo: '🛸', banana: '🍌', glove: '🥊', pistol: '🔫', knife: '🔪', sword: '⚔️', bow: '🏹', piano: '🎹', meteor: '☄️', lightning: '🌩️', pumpkin: '🎃', bats: '🦇', present: '🎁', snowballs: '☃️', shark: '🦈', coconut: '🥥' };
   // Picture for any catalog item: a character wearing it, the pet alone, or the gold ★ tile.
   function itemArt(cat, id, size) {
     if (cat === 'anim') {
-      const t = el('div', 'special-art' + (id === 'none' ? ' plain' : ''), id === 'none' ? '🔪' : '★');
+      const t = el('div', 'special-art' + (id === 'none' ? ' plain' : ''), id === 'none' ? '🔪' : ANIM_ICONS[SHARED.COSMETIC_BY_ID.anim[id].anim] || '★');
       t.style.width = t.style.height = size + 'px';
       t.style.fontSize = Math.round(size * 0.55) + 'px';
       return t;
@@ -278,8 +342,9 @@ const UI = (() => {
     return card;
   }
 
-  function openBox() {
-    const win = Wallet.openBox();
+  function openBox(boxId = 'mystery') {
+    const B = SHARED.BOXES[boxId];
+    const win = Wallet.openBox(boxId);
     if (!win) { Sfx.bad(); return; }
     const ov = $('box-overlay');
     ov.innerHTML = '';
@@ -287,9 +352,9 @@ const UI = (() => {
     const W = 132, WIN_AT = 48;
     const wrap = el('div', 'roll-wrap');
     const strip = el('div', 'roll-strip');
-    for (let i = 0; i < WIN_AT + 6; i++) strip.appendChild(lootCard(i === WIN_AT ? win : SHARED.rollBox(), null, 96));
+    for (let i = 0; i < WIN_AT + 6; i++) strip.appendChild(lootCard(i === WIN_AT ? win : SHARED.rollBox(boxId), null, 96));
     wrap.append(strip, el('div', 'roll-marker'));
-    ov.append(el('div', 'roll-title', 'Opening Mystery Box…'), wrap);
+    ov.append(el('div', 'roll-title', `Opening ${esc(B.name)}…`), wrap);
     const center = wrap.clientWidth / 2;
     const target = WIN_AT * W + W / 2 - center + (Math.random() - 0.5) * (W * 0.7);
     let lastCard = -1;
@@ -313,16 +378,16 @@ const UI = (() => {
       box.style.setProperty('--rar', r.color);
       box.appendChild(el('div', 'rr-rarity', r.name));
       box.appendChild(lootCard(win, true, 150));
-      box.appendChild(el('div', 'rr-note', win.dup ? `Duplicate! You got 🍪 ${SHARED.BOX.duplicateRefund} back.` : 'New item unlocked!'));
+      box.appendChild(el('div', 'rr-note', win.dup ? `Duplicate! You got 🍪 ${B.duplicateRefund} back.` : win.cat === 'anim' ? 'New kill animation! It\'s yours forever.' : 'New item unlocked!'));
       const row = el('div', 'rr-actions');
       if (!win.dup || App.profile[win.cat] !== win.item.id) {
         const eq = el('button', 'btn primary', 'Equip');
         eq.onclick = () => { App.setProfile({ [win.cat]: win.item.id }); closeBox(); };
         row.appendChild(eq);
       }
-      const again = el('button', 'btn', `Open another (🍪 ${SHARED.BOX.price})`);
-      again.disabled = Wallet.cookies < SHARED.BOX.price;
-      again.onclick = () => openBox();
+      const again = el('button', 'btn', `Open another (🍪 ${B.price})`);
+      again.disabled = Wallet.cookies < B.price;
+      again.onclick = () => openBox(boxId);
       const close = el('button', 'btn ghost', 'Close');
       close.onclick = closeBox;
       row.append(again, close);
@@ -350,7 +415,9 @@ const UI = (() => {
     const change = (dir) => {
       let v = value;
       if (f.type === 'bool') v = !v;
-      else if (f.type === 'select') v = (v + dir + f.options.length) % f.options.length;
+      else if (f.type === 'select') {
+        do v = (v + dir + f.options.length) % f.options.length; while (f.skip && f.skip(v) && v !== value);
+      }
       else v = Math.max(f.min, Math.min(f.max, Math.round((v + dir * f.step) * 100) / 100));
       value = v;
       val.textContent = fmt(v);
@@ -377,7 +444,9 @@ const UI = (() => {
     for (const f of C.SETTINGS_SCHEMA) {
       if (f.group) { body.appendChild(el('h3', '', f.group)); continue; }
       const row = el('div', 'set-row', `<label>${f.label}</label>`);
-      row.appendChild(stepper(s[f.key], f, (v) => pushSettings({ [f.key]: v }), !admin));
+      const ev = SHARED.activeEvent();
+      const fld = f.key === 'map' ? { ...f, skip: (i) => C.MAP_CHOICES[i] && C.MAP_CHOICES[i].event && !(ev && ev.id === C.MAP_CHOICES[i].event) } : f;
+      row.appendChild(stepper(s[f.key], fld, (v) => pushSettings({ [f.key]: v }), !admin));
       body.appendChild(row);
     }
     body.appendChild(el('h3', '', 'Roles'));
@@ -639,13 +708,13 @@ const UI = (() => {
     KillAnim.play(o, d.anim, d.killer, d.victim, `<b>You eliminated ${esc(d.victim.name)}</b>`, null, 2400);
     overlay('overlay-kill', 3000);
   }
-  function previewKillAnim() {
-    const ids = SHARED.KILL_ANIMS;
+  function previewKillAnim(anim) {
+    const ids = Object.keys(SHARED.KILL_ANIMS);
     const victimColor = SHARED.COLORS.find((c) => c.id !== App.profile.color).id;
     const o = $('overlay-kill');
     o.innerHTML = '';
     o.onclick = () => o.classList.add('hidden');
-    KillAnim.play(o, ids[Math.floor(Math.random() * ids.length)], App.profile, { name: 'Victim', color: victimColor }, '<small>Preview: click to close</small>', () => o.classList.add('hidden'));
+    KillAnim.play(o, anim || ids[Math.floor(Math.random() * ids.length)], App.profile, { name: 'Victim', color: victimColor }, '<small>Preview: click to close</small>', () => o.classList.add('hidden'));
     o.classList.remove('hidden');
   }
 

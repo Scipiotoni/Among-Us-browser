@@ -3,7 +3,7 @@
 (function (root, factory) {
   const node = typeof module === 'object' && module.exports;
   const shared = node
-    ? Object.assign({}, require('./constants.js'), require('./map.js'), require('./cosmetics.js'))
+    ? Object.assign({}, require('./constants.js'), require('./map.js'), require('./cosmetics.js'), require('./events.js'))
     : root.SHARED;
   const mod = factory(shared);
   if (node) module.exports = mod;
@@ -285,8 +285,11 @@ class Room {
       q.tasks = chosen.map((id) => ({ id, step: 0, done: false }));
     }
 
-    const choices = C.MAP_CHOICES.map((m) => m.id);
-    const mapId = S.map < choices.length ? choices[S.map] : rand(choices);
+    // Event maps can only be played while their event runs; Random includes the current one.
+    const ev = C.activeEvent();
+    const playable = C.MAP_CHOICES.filter((m) => !m.event || (ev && ev.id === m.event)).map((m) => m.id);
+    const picked = C.MAP_CHOICES[S.map];
+    const mapId = picked && playable.includes(picked.id) ? picked.id : rand(playable);
     this.map = MAPS[mapId];
     this.phase = 'playing';
     this.game = {
@@ -383,7 +386,8 @@ class Room {
     p.killCooldownEnd = t + kc;
     p.kills++;
     p.socket.emit('teleport', { x: p.x, y: p.y });
-    const anim = p.anim === 'killanims' ? rand(C.KILL_ANIMS) : null;
+    const animItem = COSMETIC_BY_ID.anim[p.anim];
+    const anim = animItem && animItem.anim ? animItem.anim : null;
     p.socket.emit('killFx', { victim: this.profileOf(v), killer: killerLook, anim });
     v.socket.emit('youDied', { killer: killerLook, victim: this.profileOf(v), ghostRole: v.ghostRole, anim });
     if (v.role === 'noisemaker') {

@@ -201,6 +201,16 @@ const Wallet = (() => {
   const changed = () => listeners.forEach((f) => f());
   const readGuest = () => { try { return JSON.parse(localStorage.getItem(GUEST_KEY) || 'null'); } catch (e) { return null; } };
   const valid = (d) => d && typeof d.cookies === 'number' && Array.isArray(d.owned);
+  // The old all-in-one "Kill Animations" prize becomes one specific animation, kept forever.
+  let migratedAnim = null;
+  function migrate(d) {
+    const i = d.owned.indexOf('anim:killanims');
+    if (i < 0) return;
+    const base = SHARED.BOX_POOLS.mystery.filter((x) => x.cat === 'anim');
+    const pick = base[Math.floor(Math.random() * base.length)].item.id;
+    d.owned.splice(i, 1, `anim:${pick}`);
+    migratedAnim = pick;
+  }
   function persist() {
     if (Accounts.user) Accounts.save(data);
     else { try { localStorage.setItem(GUEST_KEY, JSON.stringify(data)); } catch (e) { /* private mode */ } }
@@ -214,12 +224,20 @@ const Wallet = (() => {
         data = { cookies: SHARED.REWARDS.starting, owned: [] };
         for (const cat in SHARED.COSMETIC_DEFAULTS) if (profile[cat]) data.owned.push(`${cat}:${profile[cat]}`);
         persist();
+      } else {
+        migrate(data);
+        if (migratedAnim) persist();
       }
     },
+    // The animation given in place of the old prize (once), so the app can equip it.
+    takeMigratedAnim() { const a = migratedAnim; migratedAnim = null; return a; },
     guestData() { const g = readGuest(); return valid(g) ? { cookies: g.cookies, owned: g.owned.slice() } : { cookies: SHARED.REWARDS.starting, owned: [] }; },
     setData(d, save) {
       data = { cookies: Math.max(0, Math.floor(+d.cookies || 0)), owned: Array.isArray(d.owned) ? d.owned.slice() : [], profile: d.profile, t: d.t };
+      migrate(data);
       if (d.profile && typeof App !== 'undefined') App.applyAccountProfile(d.profile);
+      const anim = this.takeMigratedAnim();
+      if (anim && typeof App !== 'undefined') { App.setProfile({ anim }); save = true; }
       if (save) persist(); else changed();
     },
     useGuest() { data = readGuest(); if (!valid(data)) data = { cookies: SHARED.REWARDS.starting, owned: [] }; changed(); },
@@ -227,21 +245,26 @@ const Wallet = (() => {
     get cookies() { return data.cookies; },
     price(cat, id) { const it = SHARED.COSMETIC_BY_ID[cat] && SHARED.COSMETIC_BY_ID[cat][id]; return it ? it.price : 0; },
     owns(cat, id) { return cat === 'color' || this.price(cat, id) === 0 || data.owned.includes(`${cat}:${id}`); },
+    // Event items are only for sale while their event runs.
+    forSale(cat, id) {
+      const it = SHARED.COSMETIC_BY_ID[cat] && SHARED.COSMETIC_BY_ID[cat][id];
+      return !!it && it.price != null && (!it.event || SHARED.isEventActive(it.event));
+    },
     buy(cat, id) {
       const price = this.price(cat, id);
-      if (price == null || this.owns(cat, id) || data.cookies < price) return false;
+      if (!this.forSale(cat, id) || this.owns(cat, id) || data.cookies < price) return false;
       data.cookies -= price;
       data.owned.push(`${cat}:${id}`);
       persist();
       return true;
     },
     add(n) { if (n > 0) { data.cookies += n; persist(); } },
-    // Opens a Mystery Box: the prize is decided (and saved) right away; the roulette only shows it.
-    openBox() {
-      const B = SHARED.BOX;
-      if (data.cookies < B.price) return null;
+    // Opens a box: the prize is decided (and saved) right away; the spin only shows it.
+    openBox(boxId = 'mystery') {
+      const B = SHARED.BOXES[boxId];
+      if (!B || (B.event && !SHARED.isEventActive(B.event)) || data.cookies < B.price) return null;
       data.cookies -= B.price;
-      const win = SHARED.rollBox();
+      const win = SHARED.rollBox(boxId);
       const key = `${win.cat}:${win.item.id}`;
       const dup = data.owned.includes(key);
       if (dup) data.cookies += B.duplicateRefund;
