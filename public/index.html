@@ -97,9 +97,9 @@
     <div id="vent-arrows"></div>
     <div id="joystick" class="hidden"><div id="joystick-knob"></div></div>
 
-    <div id="chat-panel" class="hidden">
-      <div class="chat-head">Chat <button class="icon-btn small" onclick="UI.toggleChat(false)">✕</button></div>
-      <div class="chat-log"></div>
+    <div id="chat-panel" class="chat-wrap people-open hidden">
+      <div class="chat-head"><span class="chat-title">💬 Chat</span><span class="chat-tools"><button class="chip-btn people-toggle" title="Show players">👥</button><button class="icon-btn small" onclick="UI.toggleChat(false)">✕</button></span></div>
+      <div class="chat-body"><div class="chat-log"></div><div class="chat-people"></div></div>
       <div class="chat-input-row"><input id="chat-input" maxlength="140" placeholder="Say something…" autocomplete="off"><button id="chat-send" class="btn small">Send</button></div>
     </div>
   </section>
@@ -136,9 +136,9 @@
         </div>
         <div id="meet-results" class="hidden"></div>
       </div>
-      <div class="meet-chat">
-        <div class="chat-head">Discussion</div>
-        <div class="chat-log"></div>
+      <div class="meet-chat chat-wrap people-open">
+        <div class="chat-head"><span class="chat-title">🗣️ Discussion</span><span class="chat-tools"><button class="chip-btn people-toggle" title="Show players">👥</button></span></div>
+        <div class="chat-body"><div class="chat-log"></div><div class="chat-people"></div></div>
         <div class="chat-input-row"><input id="meet-chat-input" maxlength="140" placeholder="Type a message…" autocomplete="off"><button id="meet-chat-send" class="btn small">Send</button></div>
       </div>
     </div>
@@ -173,6 +173,7 @@
             <button class="cz-tab" data-tab="eyes">Eyes</button>
             <button class="cz-tab" data-tab="outfit">Outfit</button>
             <button class="cz-tab" data-tab="pet">Pet</button>
+            <button class="cz-tab" data-tab="anim">✨ Kill FX</button>
             <button class="cz-tab box-tab" data-tab="box">🎁 Boxes</button>
           </div>
           <div class="cz-filters">
@@ -273,7 +274,12 @@
         <h3>Cookies & Shop 🍪</h3>
         <p>At the end of every game you earn cookies: <b>+2</b> per task step, <b>+20</b> for winning, <b>+4</b> per kill as an Impostor, and <b>+5</b> for playing (games over 1 minute). Spend them in the <b>Shop</b> on hats, eyes, outfits and pets. Lots of items are free! Log in to keep your cookies on every device; guests' cookies stay in their browser.</p>
         <h3>Mystery Boxes 🎁</h3>
-        <p>In the Shop, open a <b>Mystery Box</b> for 🍪 150 to spin for one of 28 exclusive items you can't buy: <b style="color:#3498db">Rare</b> 62%, <b style="color:#a55eea">Epic</b> 27%, <b style="color:#f7b731">Legendary</b> 9%, <b style="color:#ff4757">Mythic</b> 2%. Duplicates give 🍪 60 back. Click the spinning strip to skip the animation.</p>
+        <p>In the Shop, open a <b>Mystery Box</b> for 🍪 150 to spin for one of 28 exclusive items you can't buy: <b style="color:#3498db">Rare</b> 61%, <b style="color:#a55eea">Epic</b> 27%, <b style="color:#f7b731">Legendary</b> 9%, <b style="color:#ff4757">Mythic</b> 2%. Duplicates give 🍪 60 back. Click the spinning strip to skip the animation.</p>
+        <p>The rarest prize (1%) is the gold <b style="color:#e4ae39">★ Kill Animations</b>: equip it in the Shop's ✨ Kill FX tab and every kill plays a random cartoon finisher (laser zap, anvil, black hole, rocket, freeze ray, UFO, banana peel, or boxing glove).</p>
+        <h3>Maps 🗺️</h3>
+        <p>The host picks the map in Settings: Station Helix, Polar Base, Skyport, Abyss Station, Dune Outpost, Asteroid Mine, or Random.</p>
+        <h3>Chat 💬</h3>
+        <p>Click 👥 in the chat to show everyone in the lobby; click a player to type their name. Names in messages are highlighted, and you hear a ping when someone says yours.</p>
         <h3>Hide tab 🙈</h3>
         <p>Make the browser tab look like Google Docs, Slides, Sheets, Drive, Classroom, Canva, Khan Academy, Quizlet or Wikipedia. Find it on the menu, or the 🙈 button in game.</p>
         <h3>Lobbies</h3>
@@ -298,6 +304,7 @@
   <script src="js/draw.js"></script>
   <script src="js/world.js"></script>
   <script src="js/tasks.js"></script>
+  <script src="js/killanim.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/game.js"></script>
   <script src="js/main.js"></script>

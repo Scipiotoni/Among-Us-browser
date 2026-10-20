@@ -638,14 +638,7 @@ const Game = (() => {
     const z = zoom();
     const cx = S.me.x, cy = S.me.y;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#05070d';
-    ctx.fillRect(0, 0, W, H);
-    // parallax stars
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    for (let i = 0; i < 90; i++) {
-      const sx = ((i * 137.5 - cx * 0.08) % W + W) % W, sy = ((i * 89.3 - cy * 0.08) % H + H) % H;
-      ctx.fillRect(sx, sy, i % 3 ? 1.5 : 2.5, i % 3 ? 1.5 : 2.5);
-    }
+    World.background(ctx, S.map.theme, W, H, cx, cy, t);
     ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (W / 2 - cx * z), dpr * (H / 2 - cy * z));
     drawScene(ctx, t, {});
     // fog of war

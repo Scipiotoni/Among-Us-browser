@@ -195,8 +195,15 @@
     X('mythic', 'x_phoenix', 'Phoenix', 'phoenix'),
   ];
 
-  const COSMETICS = { hat: HATS, eyes: EYES, outfit: OUTFITS, pet: PETS };
-  const COSMETIC_DEFAULTS = { hat: 'none', eyes: 'normal', outfit: 'none', pet: 'none' };
+  // Kill effects: the box-only special makes every kill play a random cartoon animation.
+  const ANIMS = [
+    H('none', 'Default', 0, 'none'),
+    X('special', 'killanims', '★ Kill Animations', 'killanims'),
+  ];
+  const KILL_ANIMS = ['zap', 'anvil', 'blackhole', 'rocket', 'freeze', 'ufo', 'banana', 'glove'];
+
+  const COSMETICS = { hat: HATS, eyes: EYES, outfit: OUTFITS, pet: PETS, anim: ANIMS };
+  const COSMETIC_DEFAULTS = { hat: 'none', eyes: 'normal', outfit: 'none', pet: 'none', anim: 'none' };
   const COSMETIC_BY_ID = {};
   for (const cat in COSMETICS) {
     COSMETIC_BY_ID[cat] = {};
@@ -205,10 +212,11 @@
 
   // Mystery Box: chances (in %) of each rarity, then an equal chance for each item of that rarity.
   const RARITIES = {
-    rare: { name: 'Rare', color: '#3498db', chance: 62 },
+    rare: { name: 'Rare', color: '#3498db', chance: 61 },
     epic: { name: 'Epic', color: '#a55eea', chance: 27 },
     legendary: { name: 'Legendary', color: '#f7b731', chance: 9 },
     mythic: { name: 'Mythic', color: '#ff4757', chance: 2 },
+    special: { name: '★ Rare Special', color: '#e4ae39', chance: 1 },
   };
   const BOX = { price: 150, duplicateRefund: 60 };
   const BOX_POOL = [];
@@ -223,5 +231,5 @@
   // Cookies earned at the end of a game.
   const REWARDS = { played: 5, win: 20, perTaskStep: 2, perKill: 4, minGameSeconds: 60, starting: 50 };
 
-  return { COSMETICS, COSMETIC_DEFAULTS, COSMETIC_BY_ID, REWARDS, RARITIES, BOX, BOX_POOL, rollBox };
+  return { COSMETICS, COSMETIC_DEFAULTS, COSMETIC_BY_ID, REWARDS, RARITIES, BOX, BOX_POOL, rollBox, KILL_ANIMS };
 });

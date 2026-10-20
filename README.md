@@ -14,7 +14,10 @@ No downloads for players: one person hosts the server and everyone else just ope
 - **Host & admins:** the host (👑) can promote admins (🛡), transfer host, kick, ban, mute, lock the lobby, change settings, and start or force-end games
 - **Walkable lobby** with a wardrobe and a settings terminal
 - **Customization & cookie shop:** 18 colors (unique per lobby), plus 137 cosmetics across hats, eyes, outfits and pets. Many are free; the rest cost 🍪 cookies.
-- **Mystery Boxes:** 🍪 150 each; a roulette spin wins one of 28 exclusive, unbuyable items (Rare 62%, Epic 27%, Legendary 9%, Mythic 2%). Duplicates refund 🍪 60.
+- **6 maps:** Station Helix, Polar Base, Skyport, Abyss Station, Dune Outpost and Asteroid Mine (or Random), each with its own layout, look and animated background. The new maps are built from a short grid description by `gridMap` in `shared/map.js`, which places every task, vent, camera and prop.
+- **Chat:** message bubbles in each player's color, name highlights and pings, and a player list (👥) to click someone's name into your message.
+- **★ Kill Animations:** a 1% "Rare Special" box prize; equipped, every kill plays one of 8 random cartoon finishers for the killer and victim (`public/js/killanim.js`).
+- **Mystery Boxes:** 🍪 150 each; a case-style spin wins one of 29 exclusive, unbuyable items (Rare 61%, Epic 27%, Legendary 9%, Mythic 2%, ★ Rare Special 1%). Duplicates refund 🍪 60.
 - **Hide tab:** disguise the browser tab's title and icon as Google Docs, Slides, Sheets, Drive, Classroom, Canva, Khan Academy, Quizlet or Wikipedia (generic icons drawn in code, not the real logos).
 - **Cookies:** earned at the end of every game: +2 per task step, +20 for winning, +4 per kill as an Impostor, +5 for playing (games over 1 minute). New players start with 50. Cookies and purchases are saved in each player's browser.
 - **Roles**

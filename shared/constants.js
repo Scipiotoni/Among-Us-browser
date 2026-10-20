@@ -94,8 +94,15 @@
   const SPECIAL_CREW = ['engineer', 'scientist', 'tracker', 'noisemaker', 'guardian', 'detective'];
   const SPECIAL_IMPOSTOR = ['shapeshifter', 'phantom', 'viper'];
 
+  // Maps the host can pick (geometry lives in shared/map.js); the last option picks one at random.
+  const MAP_CHOICES = [
+    { id: 'helix', name: 'Station Helix' }, { id: 'polar', name: 'Polar Base' }, { id: 'skylab', name: 'Skyport' },
+    { id: 'deepsea', name: 'Abyss Station' }, { id: 'desert', name: 'Dune Outpost' }, { id: 'mine', name: 'Asteroid Mine' },
+  ];
+
   const SETTINGS_SCHEMA = [
     { group: 'Lobby' },
+    { key: 'map', label: 'Map', type: 'select', options: [...MAP_CHOICES.map((m) => m.name), '🎲 Random'], def: 0 },
     { key: 'isPublic', label: 'Public Lobby', type: 'bool', def: true },
     { key: 'maxPlayers', label: 'Max Players', min: 4, max: 15, step: 1, def: 15 },
     { group: 'Impostors' },
@@ -134,7 +141,7 @@
   }
 
   return {
-    COLORS, ROLES, SPECIAL_CREW, SPECIAL_IMPOSTOR, SETTINGS_SCHEMA,
+    COLORS, ROLES, MAP_CHOICES, SPECIAL_CREW, SPECIAL_IMPOSTOR, SETTINGS_SCHEMA,
     defaultSettings,
     PLAYER_RADIUS: 16,
     BASE_SPEED: 250,          // world units / second

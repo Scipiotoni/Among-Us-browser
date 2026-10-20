@@ -178,6 +178,13 @@ const UI = (() => {
     document.querySelector('.cz-filters').classList.toggle('hidden', czTab === 'color' || czTab === 'box');
     grid.classList.toggle('box-mode', czTab === 'box');
     if (czTab === 'box') { $('cz-buy-box').classList.add('hidden'); renderBoxTab(grid); return; }
+    if (czTab === 'anim') {
+      const info = el('div', 'anim-info', `<b>★ Kill Animations</b> is a 1% <span style="color:${SHARED.RARITIES.special.color}">Rare Special</span> prize from Mystery Boxes. Equip it and every kill plays one of ${SHARED.KILL_ANIMS.length} random animations for you and your victim.`);
+      const pv = el('button', 'btn small', '▶ Preview an animation');
+      pv.onclick = () => previewKillAnim();
+      info.appendChild(pv);
+      grid.appendChild(info);
+    }
     const list = czTab === 'color' ? C.COLORS : SHARED.COSMETICS[czTab];
     const taken = new Set(App.room ? App.room.players.filter((p) => p.id !== App.myId).map((p) => p.color) : []);
     if (czTab !== 'color') {
@@ -198,8 +205,7 @@ const UI = (() => {
         b.classList.add('swatch');
         if (taken.has(it.id)) { b.classList.add('taken'); b.disabled = true; }
       } else {
-        const prof = { ...App.profile, [czTab]: it.id };
-        b.appendChild(portraitCanvas(prof, 72, czTab === 'pet' ? { petOnly: true } : {}));
+        b.appendChild(itemArt(czTab, it.id, 72));
         b.appendChild(el('small', '', esc(it.name)));
         if (it.rarity) b.appendChild(el('span', 'cz-price rar', owned ? `✓ ${SHARED.RARITIES[it.rarity].name}` : `🎁 ${SHARED.RARITIES[it.rarity].name}`));
         else b.appendChild(el('span', 'cz-price ' + (owned ? (it.price ? 'owned' : 'free') : ''), owned ? (it.price ? '✓' : 'FREE') : `🍪 ${it.price}`));
@@ -250,12 +256,23 @@ const UI = (() => {
     grid.appendChild(panel);
   }
 
+  // Picture for any catalog item: a character wearing it, the pet alone, or the gold ★ tile.
+  function itemArt(cat, id, size) {
+    if (cat === 'anim') {
+      const t = el('div', 'special-art' + (id === 'none' ? ' plain' : ''), id === 'none' ? '🔪' : '★');
+      t.style.width = t.style.height = size + 'px';
+      t.style.fontSize = Math.round(size * 0.55) + 'px';
+      return t;
+    }
+    return portraitCanvas({ ...App.profile, [cat]: id }, size, cat === 'pet' ? { petOnly: true } : {});
+  }
+
+  // A case-style card: item art on a dark card with a rarity-colored bar along the bottom.
   function lootCard(x, owned, size = 72) {
     const r = SHARED.RARITIES[x.item.rarity];
-    const card = el('div', 'loot-card' + (owned === false ? ' unowned' : ''));
+    const card = el('div', 'loot-card' + (owned === false ? ' unowned' : '') + (x.item.rarity === 'special' ? ' special' : ''));
     card.style.setProperty('--rar', r.color);
-    const prof = { ...App.profile, [x.cat]: x.item.id };
-    card.appendChild(portraitCanvas(prof, size, x.cat === 'pet' ? { petOnly: true } : {}));
+    card.appendChild(itemArt(x.cat, x.item.id, size));
     card.appendChild(el('small', '', esc(x.item.name)));
     card.appendChild(el('span', 'loot-rar', owned ? '✓ ' + r.name : r.name));
     return card;
@@ -402,6 +419,7 @@ const UI = (() => {
     if (!$('modal-players').classList.contains('hidden')) renderPlayers();
     if (!$('modal-settings').classList.contains('hidden') && !pendingSettings) renderSettings();
     if (!$('modal-customize').classList.contains('hidden')) renderCzGrid();
+    renderChatPeople();
   }
 
   function renderPlayers() {
@@ -469,25 +487,88 @@ const UI = (() => {
     if (!$('meeting').classList.contains('hidden')) return $('meet-chat-input').focus();
     if (Game.S.mode === 'lobby' || (Game.S.mode === 'game' && !Game.S.alive)) { toggleChat(true); $('chat-input').focus(); }
   }
+  // Splits text around player names so they can be highlighted; returns HTML.
+  function highlightNames(text, players) {
+    const names = players.map((p) => p.name).filter((n) => n && n.length >= 2).sort((a, b) => b.length - a.length);
+    if (!names.length) return esc(text);
+    const re = new RegExp(names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi');
+    let out = '', last = 0, m;
+    while ((m = re.exec(text))) {
+      const p = players.find((x) => x.name.toLowerCase() === m[0].toLowerCase());
+      out += esc(text.slice(last, m.index)) + `<span class="mention${p.id === App.myId ? ' me' : ''}" style="--c:${Draw.col(p.color).body}">@${esc(m[0])}</span>`;
+      last = m.index + m[0].length;
+    }
+    return out + esc(text.slice(last));
+  }
+  function chatPlayers() { return (M.stage && M.players.length ? M.players : (App.room ? App.room.players : [])); }
+
   function addChat(m) {
+    const players = chatPlayers();
+    const mine = m.from === App.myId;
+    const mentionsMe = !m.system && !mine && App.profile.name && new RegExp(`(^|[^\\p{L}\\p{N}])${App.profile.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}])`, 'iu').test(m.text);
+    const now = new Date();
+    const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
     for (const log of document.querySelectorAll('.chat-log')) {
-      const row = el('div', 'chat-msg' + (m.system ? ' system' : '') + (m.ghost ? ' ghost' : '') + (m.from === App.myId ? ' mine' : ''));
-      if (m.system) row.textContent = m.text;
+      const lastMsg = log.lastElementChild;
+      const grouped = !m.system && lastMsg && lastMsg.dataset.from === m.from && Date.now() - +lastMsg.dataset.t < 90000;
+      const row = el('div', 'chat-msg' + (m.system ? ' system' : '') + (m.ghost ? ' ghost' : '') + (mine ? ' mine' : '') + (grouped ? ' grouped' : '') + (mentionsMe ? ' pinged' : ''));
+      row.dataset.from = m.system ? '' : m.from;
+      row.dataset.t = Date.now();
+      if (m.system) row.innerHTML = `<span class="sys-pill">${esc(m.text)}</span>`;
       else {
-        const prof = (App.room && App.room.players.find((p) => p.id === m.from)) || { color: m.color, name: m.name };
-        row.appendChild(portraitCanvas(prof, 34));
-        row.appendChild(el('div', 'chat-text', `<b style="color:${Draw.col(m.color).body}">${esc(m.name)}${m.ghost ? ' 👻' : ''}</b><span>${esc(m.text)}</span>`));
+        const prof = players.find((p) => p.id === m.from) || { color: m.color, name: m.name };
+        const av = el('div', 'chat-avatar');
+        if (!grouped) av.appendChild(portraitCanvas(prof, 36));
+        row.appendChild(av);
+        const bub = el('div', 'chat-bubble');
+        if (!grouped) {
+          const isHost = App.room && App.room.hostId === m.from, isAdm = App.room && App.room.admins.includes(m.from);
+          bub.appendChild(el('div', 'chat-meta', `<b style="color:${Draw.col(m.color).body}">${esc(m.name)}</b>${isHost ? ' <span title="Host">👑</span>' : isAdm ? ' <span title="Admin">🛡</span>' : ''}${m.ghost ? ' <span title="Ghost">👻</span>' : ''}<time>${time}</time>`));
+        }
+        bub.appendChild(el('div', 'chat-text', highlightNames(m.text, players)));
+        row.appendChild(bub);
       }
       log.appendChild(row);
-      while (log.children.length > 120) log.firstChild.remove();
+      while (log.children.length > 150) log.firstChild.remove();
       log.scrollTop = log.scrollHeight;
     }
+    if (mentionsMe) Sfx.good();
     if ($('chat-panel').classList.contains('hidden') && !m.system) {
       unread++;
       $('chat-badge').textContent = unread;
       $('chat-badge').classList.remove('hidden');
     }
   }
+
+  // The player list on the right of each chat: click someone to type their name.
+  function renderChatPeople() {
+    const players = chatPlayers();
+    for (const box of document.querySelectorAll('.chat-people')) {
+      box.innerHTML = '';
+      box.appendChild(el('div', 'people-head', `Players · ${players.length}`));
+      for (const p of players) {
+        const chip = el('button', 'person' + (p.alive === false ? ' dead' : '') + (p.id === App.myId ? ' me' : ''));
+        chip.style.setProperty('--c', Draw.col(p.color).body);
+        chip.title = `Type ${p.name}`;
+        chip.appendChild(portraitCanvas(p, 30, { ghost: p.alive === false }));
+        chip.appendChild(el('span', '', esc(p.name) + (p.alive === false ? ' 👻' : '')));
+        chip.onclick = () => {
+          const input = box.closest('.chat-wrap').querySelector('input');
+          const v = input.value;
+          input.value = (v + (v && !v.endsWith(' ') ? ' ' : '') + p.name + ' ').slice(0, 140);
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+          Sfx.click();
+        };
+        box.appendChild(chip);
+      }
+    }
+  }
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('.people-toggle');
+    if (t) t.closest('.chat-wrap').classList.toggle('people-open');
+  });
+
   function clearChat() { document.querySelectorAll('.chat-log').forEach((l) => (l.innerHTML = '')); }
   function updateChatAvailability() {
     const S = Game.S;
@@ -534,6 +615,12 @@ const UI = (() => {
     const o = $('overlay-kill');
     o.innerHTML = '';
     if (d.ejected) return;
+    if (d.anim) {
+      KillAnim.play(o, d.anim, d.killer, d.victim, `<b>You were eliminated!</b><small>${d.ghostRole === 'guardian' ? 'As a Guardian ghost you can now protect your crew.' : 'You can still finish your tasks as a ghost.'}</small>`);
+      overlay('overlay-kill', 3600);
+      Sfx.kill();
+      return;
+    }
     const scene = el('div', 'kill-scene');
     scene.appendChild(portraitCanvas(d.killer, 180));
     scene.appendChild(el('div', 'kill-slash', '⚡'));
@@ -542,6 +629,24 @@ const UI = (() => {
     o.appendChild(el('div', 'kill-text', 'You were eliminated!' + (d.ghostRole === 'guardian' ? '<small>As a Guardian ghost you can now protect your crew.</small>' : '<small>You can still finish your tasks as a ghost.</small>')));
     overlay('overlay-kill', 2800);
     Sfx.kill();
+  }
+
+  // The killer sees their animation too (shorter, and they can keep moving underneath).
+  function killerAnim(d) {
+    if (!d.anim) return;
+    const o = $('overlay-kill');
+    o.innerHTML = '';
+    KillAnim.play(o, d.anim, d.killer, d.victim, `<b>You eliminated ${esc(d.victim.name)}</b>`, null, 2400);
+    overlay('overlay-kill', 3000);
+  }
+  function previewKillAnim() {
+    const ids = SHARED.KILL_ANIMS;
+    const victimColor = SHARED.COLORS.find((c) => c.id !== App.profile.color).id;
+    const o = $('overlay-kill');
+    o.innerHTML = '';
+    o.onclick = () => o.classList.add('hidden');
+    KillAnim.play(o, ids[Math.floor(Math.random() * ids.length)], App.profile, { name: 'Victim', color: victimColor }, '<small>Preview: click to close</small>', () => o.classList.add('hidden'));
+    o.classList.remove('hidden');
   }
 
   // ------------------------------------------------------------------ meetings
@@ -598,6 +703,7 @@ const UI = (() => {
       grid.appendChild(card);
     }
     $('meet-skip').onclick = () => { if (canVote()) castVote('skip'); };
+    renderChatPeople();
     $('meet-skipvotes').innerHTML = '';
     clearInterval(M.timer);
     M.timer = setInterval(updateMeetingTimer, 200);
@@ -681,6 +787,7 @@ const UI = (() => {
     $('overlay-eject').classList.add('hidden');
     clearInterval(M.timer);
     M.stage = null;
+    renderChatPeople();
   }
 
   // ------------------------------------------------------------------ game over
@@ -768,7 +875,7 @@ const UI = (() => {
   }
 
   return {
-    toast, initMenu, renderAccount, initLobby, openCustomize, openSettings, renderLobby, renderPlayers, addChat, clearChat, toggleChat,
+    toast, initMenu, renderAccount, killerAnim, initLobby, openCustomize, openSettings, renderLobby, renderPlayers, addChat, clearChat, toggleChat,
     focusChat, updateChatAvailability, roleReveal, killScreen, meetingStart, meetingStage, onVoted, voteResults, eject,
     meetingEnd, gameOver, hideGameOver, openPicker, showClue, vitalsList, closeModals, modalOpen, portraitCanvas,
   };

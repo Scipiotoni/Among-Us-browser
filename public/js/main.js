@@ -126,7 +126,7 @@ const App = (() => {
   });
   s.on('shiftFx', () => Sfx.poof());
   s.on('vanishFx', () => Sfx.poof());
-  s.on('killFx', () => { Sfx.kill(); document.body.classList.add('flash'); setTimeout(() => document.body.classList.remove('flash'), 200); });
+  s.on('killFx', (d) => { Sfx.kill(); document.body.classList.add('flash'); setTimeout(() => document.body.classList.remove('flash'), 200); UI.killerAnim(d || {}); });
   s.on('youDied', (d) => { Game.onDeath(d); UI.killScreen(d); UI.updateChatAvailability(); });
   s.on('noise', (d) => { Game.addNoise(d); Sfx.alarm(); UI.toast(`📢 ${d.name}'s body made a noise!`, 'warn'); });
   s.on('shielded', () => { Sfx.shield(); UI.toast('Your target was protected by a Guardian!', 'warn'); });
@@ -148,7 +148,9 @@ const App = (() => {
     Game.setFrozen(true); Game.closeMap(); Game.closeConsole(); Tasks.close();
     const mine = d.rewards && d.rewards[App.myId];
     if (mine) Wallet.add(mine.total);
-    UI.gameOver(d, mine);
+    // Let a kill animation that ended the game finish before the results cover it.
+    const killShowing = !$('overlay-kill').classList.contains('hidden');
+    setTimeout(() => UI.gameOver(d, mine), killShowing ? 2600 : 0);
   });
   s.on('backToLobby', () => {
     UI.hideGameOver();

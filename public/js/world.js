@@ -12,21 +12,22 @@ const World = (() => {
     ctx.translate(pad, pad);
     // walls: thick strokes of every walkable rect, then floors drawn on top
     ctx.lineJoin = 'round';
+    const th = map.theme || {};
     for (const r of map.rects) {
-      ctx.fillStyle = '#10141f';
+      ctx.fillStyle = th.outer || '#10141f';
       ctx.fillRect(r.x - 30, r.y - 30, r.w + 60, r.h + 60);
     }
     for (const r of map.rects) {
-      ctx.fillStyle = '#2a3247';
+      ctx.fillStyle = th.wall || '#2a3247';
       ctx.fillRect(r.x - 18, r.y - 38, r.w + 36, r.h + 52);
     }
     for (const r of map.rects) {
-      ctx.fillStyle = '#56607a';
+      ctx.fillStyle = th.wallTop || '#56607a';
       ctx.fillRect(r.x - 6, r.y - 30, r.w + 12, 30);
     }
     // floors
     for (const r of map.corridors) {
-      ctx.fillStyle = '#3d4353';
+      ctx.fillStyle = th.corridor || '#3d4353';
       ctx.fillRect(r.x, r.y, r.w, r.h);
     }
     for (const r of map.rooms) {
@@ -171,5 +172,56 @@ const World = (() => {
     return pts;
   }
 
-  return { prerender, visibility };
+  // Screen-space background behind the station, per map theme (cx, cy = camera centre for parallax).
+  const BG = { space: '#05070d', snow: '#c9d6e3', sky: '#7ec4f2', ocean: '#062a40', sand: '#d8b57a', asteroids: '#07060a' };
+  function background(ctx, theme, W, H, cx, cy, t) {
+    const kind = (theme && theme.bg) || 'space';
+    ctx.fillStyle = BG[kind] || BG.space;
+    ctx.fillRect(0, 0, W, H);
+    const wrap = (v, m) => ((v % m) + m) % m;
+    if (kind === 'space' || kind === 'asteroids') {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      for (let i = 0; i < 90; i++) {
+        const sx = wrap(i * 137.5 - cx * 0.08, W), sy = wrap(i * 89.3 - cy * 0.08, H);
+        ctx.fillRect(sx, sy, i % 3 ? 1.5 : 2.5, i % 3 ? 1.5 : 2.5);
+      }
+      if (kind === 'asteroids') for (let i = 0; i < 14; i++) {
+        const sx = wrap(i * 211 - cx * 0.25 + t * 6 * (i % 3 + 1), W + 120) - 60, sy = wrap(i * 157 - cy * 0.25, H + 120) - 60;
+        ctx.save(); ctx.translate(sx, sy); ctx.rotate(t * 0.2 * (i % 2 ? 1 : -1) + i);
+        ctx.fillStyle = ['#4a3d33', '#5c4d40', '#3d332c'][i % 3];
+        ctx.beginPath();
+        for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2, r = (14 + (i % 4) * 8) * (0.8 + ((k * 5 + i) % 3) * 0.12); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+        ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+    } else if (kind === 'snow') {
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < 120; i++) {
+        const sx = wrap(i * 97.3 - cx * 0.3 + Math.sin(t + i) * 12, W), sy = wrap(i * 53.7 - cy * 0.3 + t * (30 + (i % 5) * 12), H);
+        ctx.beginPath(); ctx.arc(sx, sy, 1.5 + (i % 3), 0, 7); ctx.fill();
+      }
+    } else if (kind === 'sky') {
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      for (let i = 0; i < 12; i++) {
+        const sx = wrap(i * 263 - cx * 0.15 + t * 8, W + 300) - 150, sy = wrap(i * 181 - cy * 0.15, H + 200) - 100;
+        for (const [dx, dy, r] of [[0, 0, 40], [40, -14, 34], [76, 2, 30], [30, 14, 36]]) { ctx.beginPath(); ctx.arc(sx + dx, sy + dy, r, 0, 7); ctx.fill(); }
+      }
+    } else if (kind === 'ocean') {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, 'rgba(40,140,180,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0.3)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(180,230,255,0.45)'; ctx.lineWidth = 1.5;
+      for (let i = 0; i < 60; i++) {
+        const sx = wrap(i * 71.9 - cx * 0.2 + Math.sin(t * 2 + i) * 6, W), sy = wrap(i * 113.1 - cy * 0.2 - t * (20 + (i % 4) * 10), H);
+        ctx.beginPath(); ctx.arc(sx, sy, 2 + (i % 4), 0, 7); ctx.stroke();
+      }
+    } else if (kind === 'sand') {
+      ctx.strokeStyle = 'rgba(150,105,55,0.35)'; ctx.lineWidth = 3;
+      for (let i = 0; i < 18; i++) {
+        const sy = wrap(i * 97 - cy * 0.3, H + 60) - 30, sx = wrap(i * 173 - cx * 0.3, W + 300) - 150;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 80, sy - 22, sx + 160, sy); ctx.stroke();
+      }
+    }
+  }
+
+  return { prerender, visibility, background };
 })();

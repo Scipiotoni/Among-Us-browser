@@ -62,7 +62,7 @@ class Room {
   alivePlayers() { return [...this.players.values()].filter((p) => p.alive); }
 
   profileOf(p) {
-    return { id: p.id, name: p.name, color: p.color, hat: p.hat, eyes: p.eyes, outfit: p.outfit, pet: p.pet };
+    return { id: p.id, name: p.name, color: p.color, hat: p.hat, eyes: p.eyes, outfit: p.outfit, pet: p.pet, anim: p.anim };
   }
 
   publicState() {
@@ -285,7 +285,9 @@ class Room {
       q.tasks = chosen.map((id) => ({ id, step: 0, done: false }));
     }
 
-    this.map = MAPS.helix;
+    const choices = C.MAP_CHOICES.map((m) => m.id);
+    const mapId = S.map < choices.length ? choices[S.map] : rand(choices);
+    this.map = MAPS[mapId];
     this.phase = 'playing';
     this.game = {
       startedAt: t, numImpostors: numImp, bodies: [], sabotage: null, sabotageCooldownEnd: t + 15000,
@@ -300,7 +302,7 @@ class Room {
     const impostorIds = list.filter((q) => q.team === 'impostor').map((q) => q.id);
     for (const q of list) {
       q.socket.emit('gameStart', {
-        map: 'helix', role: q.role, team: q.team,
+        map: mapId, role: q.role, team: q.team,
         teammates: q.team === 'impostor' ? impostorIds : [],
         tasks: q.tasks, x: q.x, y: q.y, numImpostors: numImp,
         players: list.map((o) => this.profileOf(o)), settings: S,
@@ -381,8 +383,9 @@ class Room {
     p.killCooldownEnd = t + kc;
     p.kills++;
     p.socket.emit('teleport', { x: p.x, y: p.y });
-    p.socket.emit('killFx', { victim: this.profileOf(v) });
-    v.socket.emit('youDied', { killer: killerLook, victim: this.profileOf(v), ghostRole: v.ghostRole });
+    const anim = p.anim === 'killanims' ? rand(C.KILL_ANIMS) : null;
+    p.socket.emit('killFx', { victim: this.profileOf(v), killer: killerLook, anim });
+    v.socket.emit('youDied', { killer: killerLook, victim: this.profileOf(v), ghostRole: v.ghostRole, anim });
     if (v.role === 'noisemaker') {
       const cfg = this.settings.roles.noisemaker;
       const until = t + cfg.alertDuration * 1000;
