@@ -122,8 +122,19 @@ const Draw = (() => {
         ellipse(ctx, ex, -33, 11, blink ? 1.5 : 11, '#fff', '#111', 2.5);
         if (!blink) ellipse(ctx, ex + dir * 3, -33, 5, 5, '#111');
         return;
+      case 'void':
+        for (const cx of [L, R]) { ellipse(ctx, cx, -33, 6.5, 7.5, '#05030a', '#111', 2); ellipse(ctx, cx + dir * 1.5, -33, 1.8, 1.8, '#fff'); }
+        return;
+      case 'galaxyeyes':
+        for (const cx of [L, R]) {
+          const g = ctx.createRadialGradient(cx, -33, 1, cx, -33, 7.5);
+          g.addColorStop(0, '#fd79a8'); g.addColorStop(0.5, '#6c5ce7'); g.addColorStop(1, '#130f40');
+          ellipse(ctx, cx, -33, 6.5, 7.5, g, '#111', 2);
+          for (let i = 0; i < 3; i++) ellipse(ctx, cx + Math.cos(t * 2 + i * 2.1) * 3.5, -33 + Math.sin(t * 2 + i * 2.1) * 4, 0.9, 0.9, '#fff');
+        }
+        return;
       case 'shades':
-        ctx.fillStyle = e.c;
+        ctx.fillStyle = e.rainbow ? (() => { const g = ctx.createLinearGradient(ex - 18, 0, ex + 18, 0); RAINBOW.forEach((r, i) => g.addColorStop(i / 5, r)); return g; })() : e.c;
         ctx.beginPath(); ctx.roundRect(ex - 18, -38, 15, 10, 4); ctx.roundRect(ex + 3, -38, 15, 10, 4); ctx.fill();
         ctx.fillRect(ex - 4, -36, 8, 3);
         ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(ex - 15, -36, 4, 2); ctx.fillRect(ex + 6, -36, 4, 2);
@@ -152,8 +163,8 @@ const Draw = (() => {
         return;
       case 'laser':
         eyeball(ctx, L, dir, false); eyeball(ctx, R, dir, false);
-        ellipse(ctx, L + dir * 2, -32, 3.5, 3.5, '#ff1e1e'); ellipse(ctx, R + dir * 2, -32, 3.5, 3.5, '#ff1e1e');
-        ctx.strokeStyle = `rgba(255,30,30,${0.45 + Math.sin(t * 12) * 0.25})`; ctx.lineWidth = 3;
+        ellipse(ctx, L + dir * 2, -32, 3.5, 3.5, e.c || '#ff1e1e'); ellipse(ctx, R + dir * 2, -32, 3.5, 3.5, e.c || '#ff1e1e');
+        ctx.strokeStyle = `${e.c2 || 'rgba(255,30,30,'}${0.45 + Math.sin(t * 12) * 0.25})`; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(L + dir * 4, -32); ctx.lineTo(L + dir * 40, -24); ctx.moveTo(R + dir * 4, -32); ctx.lineTo(R + dir * 40, -24); ctx.stroke();
         return;
       case 'eyepatch':
@@ -195,7 +206,7 @@ const Draw = (() => {
           heart(ctx, cx, -33, 5, '#ff3d7f');
           break;
         case 'stars':
-          ellipse(ctx, cx, -33, 6, 7, '#fff', '#111', 2); star(ctx, cx + dir * 1.5, -33, 4.5, '#ffd32a');
+          ellipse(ctx, cx, -33, 6, 7, '#fff', '#111', 2); star(ctx, cx + dir * 1.5, -33, 4.5, e.c || '#ffd32a');
           break;
         case 'dollar':
           ellipse(ctx, cx, -33, 6, 7, '#fff', '#111', 2);
@@ -233,7 +244,25 @@ const Draw = (() => {
 
   // ------------------------------------------------------------------ outfits
   function drawOutfitBack(ctx, o, dir, t, bob, moving) {
-    if (o.draw === 'cape') {
+    if (o.draw === 'aura') {
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 + t * 1.5;
+        const r = 30 + Math.sin(t * 5 + i * 1.7) * 4;
+        ctx.fillStyle = o.rainbow ? `hsla(${(i * 36 + t * 90) % 360}, 90%, 60%, 0.45)` : (i % 2 ? o.c[0] : o.c[1]) + '77';
+        ctx.beginPath(); ctx.ellipse(Math.cos(a) * r * 0.9, -30 + Math.sin(a) * r, 9, 9, 0, 0, 7); ctx.fill();
+      }
+    } else if (o.draw === 'wings') {
+      const flap = Math.sin(t * (moving ? 10 : 3)) * 0.18;
+      for (const side of [-1, 1]) {
+        ctx.save(); ctx.translate(side * 10, -36 - bob); ctx.rotate(side * (0.35 + flap)); ctx.scale(side, 1);
+        const g = ctx.createLinearGradient(0, 0, 40, -20);
+        g.addColorStop(0, '#ff4d00'); g.addColorStop(0.6, '#ffb300'); g.addColorStop(1, '#fff3b0');
+        ctx.fillStyle = g; ctx.strokeStyle = '#7a1f00'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(22, -34, 44, -26);
+        for (let k = 0; k < 4; k++) ctx.quadraticCurveTo(40 - k * 9, -14 + k * 3, 34 - k * 10, -12 + k * 5);
+        ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+      }
+    } else if (o.draw === 'cape') {
       ctx.fillStyle = o.c; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(-dir * 6, -46 - bob);
@@ -323,6 +352,15 @@ const Draw = (() => {
         ellipse(ctx, -10, -18, 2, 2, '#f1c40f'); ellipse(ctx, 10, -18, 2, 2, '#f1c40f');
         ctx.restore(); break;
       case 'pattern': drawPattern(ctx, o.p, t); break;
+      case 'armor':
+        ctx.save(); clipBody(ctx);
+        ctx.fillStyle = o.c; ctx.fillRect(-25, -24, 50, 24);
+        ctx.strokeStyle = o.c2; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-25, -24); ctx.lineTo(25, -24); ctx.moveTo(cx, -24); ctx.lineTo(cx, 0); ctx.moveTo(-25, -12); ctx.lineTo(25, -12); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(cx - 14 + ((t * 30) % 40), -24, 4, 24);
+        ctx.restore();
+        ellipse(ctx, cx, -18, 4, 4, '#e84393', o.c2, 2);
+        break;
     }
   }
 
@@ -349,6 +387,19 @@ const Draw = (() => {
       case 'rainbow':
         RAINBOW.forEach((r, i) => { ctx.fillStyle = r; ctx.globalAlpha = 0.6; ctx.fillRect(-25, -28 + i * 4, 50, 4); });
         ctx.globalAlpha = 1; break;
+      case 'lava':
+        ctx.fillStyle = 'rgba(40,10,0,0.55)'; ctx.fillRect(-25, -56, 50, 54);
+        ctx.strokeStyle = `rgba(255,${120 + Math.sin(t * 3) * 60},0,0.9)`; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(-18, -48); ctx.lineTo(-6, -36); ctx.lineTo(-12, -22); ctx.lineTo(2, -12);
+        ctx.moveTo(-6, -36); ctx.lineTo(10, -40); ctx.lineTo(16, -26); ctx.moveTo(10, -40); ctx.lineTo(14, -52); ctx.stroke();
+        break;
+      case 'ice':
+        ctx.fillStyle = 'rgba(200,240,255,0.45)'; ctx.fillRect(-25, -56, 50, 54);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.5;
+        for (const [x, y] of [[-10, -40], [10, -22], [8, -46]]) for (let k = 0; k < 3; k++) {
+          const a = k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * 5, y - Math.sin(a) * 5); ctx.lineTo(x + Math.cos(a) * 5, y + Math.sin(a) * 5); ctx.stroke();
+        }
+        break;
       case 'galaxy': {
         const g = ctx.createRadialGradient(0, -30, 2, 0, -30, 26);
         g.addColorStop(0, 'rgba(162,155,254,0.6)'); g.addColorStop(1, 'rgba(20,10,60,0.75)');
@@ -379,6 +430,10 @@ const Draw = (() => {
       case 'crown':
         ctx.beginPath(); ctx.moveTo(-15, -50); ctx.lineTo(-17, -70); ctx.lineTo(-8, -61); ctx.lineTo(0, -73); ctx.lineTo(8, -61); ctx.lineTo(17, -70); ctx.lineTo(15, -50); ctx.closePath(); P(h.c);
         ellipse(ctx, 0, -57, 3, 3, h.c2);
+        if (h.shine) for (let i = 0; i < 3; i++) {
+          const k = (t * 0.8 + i / 3) % 1;
+          star(ctx, -14 + i * 14, -74 + Math.sin(t * 3 + i) * 3, 3.5 * Math.sin(k * Math.PI), '#fff');
+        }
         break;
       case 'beanie':
         ctx.beginPath(); ctx.ellipse(0, -50, 20, 15, 0, Math.PI, 0); ctx.closePath(); P(h.c);
@@ -391,11 +446,12 @@ const Draw = (() => {
         ellipse(ctx, dir * 3, -85, 4, 4, '#e17055', '#111', 1.5);
         break;
       case 'halo':
-        ctx.lineWidth = 4; ctx.strokeStyle = '#ffeaa7';
+        ctx.lineWidth = 4; ctx.strokeStyle = h.rainbow ? `hsl(${(t * 120) % 360}, 90%, 65%)` : '#ffeaa7';
+        if (h.rainbow) { ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 12; }
         ctx.beginPath(); ctx.ellipse(0, -72 + Math.sin(t * 3) * 2, 15, 5, 0, 0, Math.PI * 2); ctx.stroke();
         break;
       case 'horns':
-        for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 8, -51); ctx.quadraticCurveTo(sx * 14, -62, sx * 18, -66); ctx.quadraticCurveTo(sx * 17, -56, sx * 15, -48); ctx.closePath(); P('#d63031'); }
+        for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 8, -51); ctx.quadraticCurveTo(sx * 14, -62, sx * 18, -66); ctx.quadraticCurveTo(sx * 17, -56, sx * 15, -48); ctx.closePath(); P(h.c || '#d63031'); }
         break;
       case 'chef':
         ctx.beginPath(); ctx.rect(-14, -60, 28, 10); P('#fff');
@@ -418,7 +474,7 @@ const Draw = (() => {
         ctx.beginPath(); ctx.roundRect(19, -42, 9, 16, 4); P(h.c);
         break;
       case 'antlers':
-        ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 3.5;
+        ctx.strokeStyle = h.c || '#8b5a2b'; ctx.lineWidth = 3.5;
         for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 9, -51); ctx.lineTo(sx * 15, -72); ctx.moveTo(sx * 12, -62); ctx.lineTo(sx * 21, -66); ctx.moveTo(sx * 14, -69); ctx.lineTo(sx * 9, -76); ctx.stroke(); }
         break;
       case 'pirate':
@@ -570,7 +626,7 @@ const Draw = (() => {
       case 'flame':
         for (let i = 0; i < 3; i++) {
           const fl = Math.sin(t * 14 + i * 2) * 3;
-          ctx.fillStyle = ['#e84118', '#fbc531', '#fff6a3'][i];
+          ctx.fillStyle = (h.c || ['#e84118', '#fbc531', '#fff6a3'])[i];
           const w = 14 - i * 4, hgt = 30 - i * 8;
           ctx.beginPath(); ctx.moveTo(-w, -50); ctx.quadraticCurveTo(-w, -50 - hgt * 0.6, fl, -50 - hgt); ctx.quadraticCurveTo(w, -50 - hgt * 0.6, w, -50); ctx.closePath(); ctx.fill();
         }
@@ -580,6 +636,19 @@ const Draw = (() => {
         RAINBOW.forEach((r, i) => { ctx.strokeStyle = r; ctx.beginPath(); ctx.arc(0, -52, 30 - i * 3.5, Math.PI, 0); ctx.stroke(); });
         ellipse(ctx, -30, -54, 7, 5, '#fff'); ellipse(ctx, 30, -54, 7, 5, '#fff');
         break;
+      case 'orbit': {
+        const planets = [['#f9ca24', 7, 0, 26, 1], ['#74b9ff', 4, 1.6, 34, 1.7], ['#ff7675', 3.5, 3.6, 42, 1.2], ['#55efc4', 3, 5, 30, 2.3]];
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
+        for (const [, , , r] of planets) { ctx.beginPath(); ctx.ellipse(0, -66, r, r * 0.3, 0, 0, 7); ctx.stroke(); }
+        for (const [c, size, a0, r, sp] of planets) {
+          const a = a0 + t * sp;
+          const x = Math.cos(a) * r, y = -66 + Math.sin(a) * r * 0.3;
+          ellipse(ctx, x, y, size, size, c, '#111', 1.5);
+        }
+        ctx.shadowColor = '#f9ca24'; ctx.shadowBlur = 14;
+        ellipse(ctx, 0, -66, 8, 8, '#ffd32a', '#111', 1.5);
+        break;
+      }
       case 'raincloud': {
         const y = -84 + Math.sin(t * 2) * 2;
         ctx.fillStyle = '#9aa5b1';
@@ -616,7 +685,7 @@ const Draw = (() => {
       case 'kitty':
         ellipse(ctx, 0, -14, 15, 13, p.c, '#111');
         for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sx * 12, -22); ctx.lineTo(sx * 10, -34); ctx.lineTo(sx * 3, -26); ctx.closePath(); ctx.fillStyle = p.c; ctx.fill(); ctx.stroke(); }
-        ellipse(ctx, dir * 3 - 5, -15, 2.5, 3, p.c === '#3d3d3d' ? '#f9ca24' : '#111'); ellipse(ctx, dir * 3 + 5, -15, 2.5, 3, p.c === '#3d3d3d' ? '#f9ca24' : '#111');
+        { const eye = p.eye || (p.c === '#3d3d3d' ? '#f9ca24' : '#111'); ellipse(ctx, dir * 3 - 5, -15, 2.5, 3, eye); ellipse(ctx, dir * 3 + 5, -15, 2.5, 3, eye); }
         break;
       case 'puppy':
         ellipse(ctx, 0, -14, 15, 13, '#d4a373', '#111');
@@ -704,13 +773,50 @@ const Draw = (() => {
         ellipse(ctx, 0, -16, 14, 14, c.body, '#111'); eyes(-18, 4);
         break;
       }
+      case 'blackhole': {
+        fly(3, -22);
+        for (let i = 0; i < 3; i++) {
+          ctx.strokeStyle = `rgba(${[162, 255, 116][i]},${[155, 159, 185][i]},${[254, 67, 255][i]},0.8)`; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(0, 0, 18 - i * 3, 6 - i, t * (1 + i * 0.4), 0, 7); ctx.stroke();
+        }
+        ellipse(ctx, 0, 0, 7, 7, '#000', '#6c5ce7', 2);
+        break;
+      }
+      case 'unicornpet': {
+        ellipse(ctx, 0, -12, 15, 11, '#fff', '#111');
+        ellipse(ctx, dir * 11, -24, 8, 8, '#fff', '#111');
+        ctx.beginPath(); ctx.moveTo(dir * 11 - 2, -31); ctx.lineTo(dir * 14, -42); ctx.lineTo(dir * 11 + 3, -31); ctx.closePath(); ctx.fillStyle = '#f9ca24'; ctx.fill(); ctx.stroke();
+        RAINBOW.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(-dir * 4 - 2 - dir * i * 1.5, -28 + i * 2.5, 3, 3); });
+        ctx.strokeStyle = `hsl(${(t * 120) % 360}, 80%, 60%)`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-dir * 14, -14); ctx.quadraticCurveTo(-dir * 24, -10 + Math.sin(t * 5) * 4, -dir * 22, -2); ctx.stroke();
+        ellipse(ctx, dir * 14, -25, 1.8, 2, '#111');
+        break;
+      }
+      case 'phoenix': {
+        fly(4, -22);
+        const flap = Math.sin(t * 9) * 8;
+        for (const side of [-1, 1]) {
+          ctx.fillStyle = side < 0 ? '#ff6b00' : '#ffb300';
+          ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(side * 22, -16 - flap); ctx.lineTo(side * 14, -2); ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = ['#ff4d00', '#ff9f1a', '#ffe066'][i];
+          ctx.beginPath(); ctx.moveTo(-dir * 6, 0); ctx.quadraticCurveTo(-dir * (16 + i * 3), 6 + i * 4, -dir * (20 + i * 4), 14 + i * 3 + Math.sin(t * 6 + i) * 2); ctx.lineTo(-dir * 4, 2); ctx.fill();
+        }
+        ellipse(ctx, 0, -4, 9, 8, '#ff7f00', '#111');
+        ctx.fillStyle = '#f9ca24'; ctx.beginPath(); ctx.moveTo(dir * 7, -6); ctx.lineTo(dir * 13, -4); ctx.lineTo(dir * 7, -2); ctx.fill();
+        ellipse(ctx, dir * 3, -7, 1.6, 1.8, '#111');
+        ctx.fillStyle = '#ffe066'; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(i * 3, -11); ctx.lineTo(i * 4, -17 + Math.abs(i) * 2); ctx.lineTo(i * 3 + 2, -11); ctx.fill(); }
+        break;
+      }
       case 'dragon': {
         fly(3, -16);
         const flap = Math.sin(t * 8) * 6;
-        ctx.fillStyle = '#6ab04c';
+        const dc = p.c || '#6ab04c';
+        ctx.fillStyle = dc;
         ctx.beginPath(); ctx.moveTo(-dir * 4, -18); ctx.lineTo(-dir * 20, -30 - flap); ctx.lineTo(-dir * 14, -14); ctx.closePath(); ctx.fill(); ctx.stroke();
-        ellipse(ctx, 0, -10, 14, 11, '#6ab04c', '#111');
-        ellipse(ctx, dir * 10, -22, 9, 8, '#6ab04c', '#111');
+        ellipse(ctx, 0, -10, 14, 11, dc, '#111');
+        ellipse(ctx, dir * 10, -22, 9, 8, dc, '#111');
         ellipse(ctx, dir * 13, -24, 2, 2.4, '#111');
         ctx.fillStyle = '#f9ca24'; ctx.beginPath(); ctx.moveTo(dir * 6, -29); ctx.lineTo(dir * 4, -36); ctx.lineTo(dir * 10, -30); ctx.fill();
         if (Math.sin(t * 1.5) > 0.85) { ctx.fillStyle = '#ff9f43'; ctx.beginPath(); ctx.moveTo(dir * 18, -21); ctx.lineTo(dir * 30, -25); ctx.lineTo(dir * 30, -17); ctx.fill(); }

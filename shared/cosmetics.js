@@ -6,6 +6,8 @@
   else { root.SHARED = root.SHARED || {}; Object.assign(root.SHARED, mod); }
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   const H = (id, name, price, draw, extra) => ({ id, name, price, draw, ...extra });
+  // Box-only exclusives: no price, can't be bought, only won from Mystery Boxes.
+  const X = (rarity, id, name, draw, extra) => ({ id, name, price: null, rarity, draw, ...extra });
 
   const HATS = [
     H('none', 'None', 0, 'none', { ant: true }),
@@ -72,6 +74,15 @@
     H('flame', 'Head Flame', 300, 'flame'),
     H('rainbow', 'Rainbow', 350, 'rainbow', { ant: true }),
     H('crown_ruby', 'Ruby Crown', 450, 'crown', { c: '#e84393', c2: '#f9ca24' }),
+    X('rare', 'x_icecrown', 'Ice Crown', 'crown', { c: '#dff9fb', c2: '#74b9ff' }),
+    X('rare', 'x_lavahorns', 'Lava Horns', 'horns', { c: '#ff7f00', ant: true }),
+    X('rare', 'x_shadowwizard', 'Shadow Wizard Hat', 'wizard', { c: '#1e1e2e' }),
+    X('epic', 'x_goldtophat', 'Golden Top Hat', 'tophat', { c: '#f9ca24', c2: '#111' }),
+    X('epic', 'x_goldantlers', 'Golden Antlers', 'antlers', { c: '#f9ca24', ant: true }),
+    X('epic', 'x_diamondcrown', 'Diamond Crown', 'crown', { c: '#a8e6ff', c2: '#ffffff', shine: true }),
+    X('legendary', 'x_blueflame', 'Blue Flame', 'flame', { c: ['#0652dd', '#1289a7', '#c7ecee'] }),
+    X('legendary', 'x_rainbowhalo', 'Rainbow Halo', 'halo', { rainbow: true, ant: true }),
+    X('mythic', 'x_orbit', 'Tiny Solar System', 'orbit', { ant: true }),
   ];
 
   const EYES = [
@@ -99,6 +110,11 @@
     H('dollar', 'Money Eyes', 150, 'dollar'),
     H('pixel', 'Pixel Shades', 180, 'pixel'),
     H('laser', 'Laser Eyes', 200, 'laser'),
+    X('rare', 'x_void', 'Void Eyes', 'void'),
+    X('rare', 'x_rainbowshades', 'Rainbow Shades', 'shades', { rainbow: true }),
+    X('epic', 'x_fireeyes', 'Fire Eyes', 'laser', { c: '#ff9f1a', c2: 'rgba(255,159,26,' }),
+    X('epic', 'x_diamondeyes', 'Diamond Eyes', 'stars', { c: '#a8e6ff' }),
+    X('legendary', 'x_galaxyeyes', 'Galaxy Eyes', 'galaxyeyes'),
   ];
 
   const OUTFITS = [
@@ -138,6 +154,14 @@
     H('rainbow_belly', 'Rainbow Belly', 200, 'pattern', { p: 'rainbow' }),
     H('cape_gold', 'Royal Cape', 300, 'cape', { c: '#f1c40f', back: true }),
     H('galaxy', 'Galaxy', 300, 'pattern', { p: 'galaxy' }),
+    X('rare', 'x_lava', 'Lava Skin', 'pattern', { p: 'lava' }),
+    X('rare', 'x_ice', 'Frozen Skin', 'pattern', { p: 'ice' }),
+    X('rare', 'x_shadowcape', 'Shadow Cape', 'cape', { c: '#151520', back: true }),
+    X('epic', 'x_goldarmor', 'Golden Armor', 'armor', { c: '#f9ca24', c2: '#c49a00' }),
+    X('epic', 'x_fireaura', 'Fire Aura', 'aura', { c: ['#ff4d00', '#ffb300'], back: true }),
+    X('legendary', 'x_diamondarmor', 'Diamond Armor', 'armor', { c: '#a8e6ff', c2: '#4aa8d8' }),
+    X('legendary', 'x_rainbowaura', 'Rainbow Aura', 'aura', { rainbow: true, back: true }),
+    X('mythic', 'x_wings', 'Phoenix Wings', 'wings', { back: true }),
   ];
 
   const PETS = [
@@ -163,6 +187,12 @@
     H('star', 'Star Buddy', 220, 'starpet'),
     H('miniblob', 'Mini Me', 250, 'miniblob'),
     H('dragon', 'Baby Dragon', 400, 'dragon'),
+    X('rare', 'x_shadowkitty', 'Shadow Kitty', 'kitty', { c: '#1e1e2e', eye: '#ff4757' }),
+    X('rare', 'x_iceslime', 'Ice Slime', 'slime', { c: 'rgba(116,185,255,0.85)' }),
+    X('epic', 'x_blackhole', 'Pocket Black Hole', 'blackhole'),
+    X('legendary', 'x_golddragon', 'Golden Dragon', 'dragon', { c: '#f9ca24' }),
+    X('legendary', 'x_unicorn', 'Rainbow Unicorn', 'unicornpet'),
+    X('mythic', 'x_phoenix', 'Phoenix', 'phoenix'),
   ];
 
   const COSMETICS = { hat: HATS, eyes: EYES, outfit: OUTFITS, pet: PETS };
@@ -173,8 +203,25 @@
     for (const item of COSMETICS[cat]) COSMETIC_BY_ID[cat][item.id] = item;
   }
 
+  // Mystery Box: chances (in %) of each rarity, then an equal chance for each item of that rarity.
+  const RARITIES = {
+    rare: { name: 'Rare', color: '#3498db', chance: 62 },
+    epic: { name: 'Epic', color: '#a55eea', chance: 27 },
+    legendary: { name: 'Legendary', color: '#f7b731', chance: 9 },
+    mythic: { name: 'Mythic', color: '#ff4757', chance: 2 },
+  };
+  const BOX = { price: 150, duplicateRefund: 60 };
+  const BOX_POOL = [];
+  for (const cat in COSMETICS) for (const item of COSMETICS[cat]) if (item.rarity) BOX_POOL.push({ cat, item });
+  function rollBox(rand = Math.random) {
+    let r = rand() * 100, rarity = 'rare';
+    for (const k in RARITIES) { if (r < RARITIES[k].chance) { rarity = k; break; } r -= RARITIES[k].chance; }
+    const pool = BOX_POOL.filter((x) => x.item.rarity === rarity);
+    return pool[Math.floor(rand() * pool.length)];
+  }
+
   // Cookies earned at the end of a game.
   const REWARDS = { played: 5, win: 20, perTaskStep: 2, perKill: 4, minGameSeconds: 60, starting: 50 };
 
-  return { COSMETICS, COSMETIC_DEFAULTS, COSMETIC_BY_ID, REWARDS };
+  return { COSMETICS, COSMETIC_DEFAULTS, COSMETIC_BY_ID, REWARDS, RARITIES, BOX, BOX_POOL, rollBox };
 });

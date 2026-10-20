@@ -158,6 +158,7 @@ const App = (() => {
   });
 
   // ------------------------------------------------------------------ boot
+  Cloak.init();
   Wallet.load(App.profile);
   Net.start();
   window.addEventListener('DOMContentLoaded', () => {

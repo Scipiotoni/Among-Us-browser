@@ -4,7 +4,7 @@ const UI = (() => {
   const $ = (id) => document.getElementById(id);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const MODALS = ['modal-account', 'modal-customize', 'modal-settings', 'modal-players', 'modal-picker', 'modal-clue', 'modal-help'];
+  const MODALS = ['modal-cloak', 'modal-account', 'modal-customize', 'modal-settings', 'modal-players', 'modal-picker', 'modal-clue', 'modal-help'];
 
   function portraitCanvas(prof, size = 64, opts) {
     const c = el('canvas', 'portrait');
@@ -45,6 +45,8 @@ const UI = (() => {
     $('code-input').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, ''); });
     $('btn-browse').onclick = () => browse();
     $('btn-help').onclick = () => openModal('modal-help');
+    $('btn-cloak').onclick = openCloak;
+    $('btn-cloak2').onclick = openCloak;
     initAccount();
     const pv = $('menu-preview');
     const loop = (t) => {
@@ -100,6 +102,20 @@ const UI = (() => {
       Sfx.good();
     };
     renderAccount();
+  }
+
+  // ------------------------------------------------------------------ hide tab
+  function openCloak() {
+    const g = $('cloak-grid');
+    g.innerHTML = '';
+    const cur = Cloak.current();
+    for (const o of Cloak.OPTIONS) {
+      const b = el('button', 'cloak-item' + (o.id === cur ? ' selected' : ''));
+      b.innerHTML = o.icon ? `<img src="${o.icon}" alt=""><span><b>${esc(o.name)}</b><small>${esc(o.title)}</small></span>` : `<span class="cloak-off">🎮</span><span><b>${esc(o.name)}</b><small>Browser Imposter</small></span>`;
+      b.onclick = () => { Cloak.set(o.id); Sfx.click(); openCloak(); };
+      g.appendChild(b);
+    }
+    openModal('modal-cloak');
   }
 
   function browse() {
@@ -159,7 +175,9 @@ const UI = (() => {
     grid.innerHTML = '';
     document.querySelectorAll('.cz-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === czTab));
     document.querySelectorAll('.cz-filter').forEach((b) => b.classList.toggle('active', b.dataset.filter === czFilter));
-    document.querySelector('.cz-filters').classList.toggle('hidden', czTab === 'color');
+    document.querySelector('.cz-filters').classList.toggle('hidden', czTab === 'color' || czTab === 'box');
+    grid.classList.toggle('box-mode', czTab === 'box');
+    if (czTab === 'box') { $('cz-buy-box').classList.add('hidden'); renderBoxTab(grid); return; }
     const list = czTab === 'color' ? C.COLORS : SHARED.COSMETICS[czTab];
     const taken = new Set(App.room ? App.room.players.filter((p) => p.id !== App.myId).map((p) => p.color) : []);
     if (czTab !== 'color') {
@@ -168,11 +186,12 @@ const UI = (() => {
     }
     for (const it of list) {
       const owned = Wallet.owns(czTab, it.id);
-      if (czTab !== 'color' && ((czFilter === 'owned' && !owned) || (czFilter === 'shop' && owned))) continue;
+      if (czTab !== 'color' && ((czFilter === 'owned' && !owned) || (czFilter === 'shop' && (owned || it.price == null)))) continue;
       const sel = App.profile[czTab] === it.id;
       const previewing = czPreview && czPreview.cat === czTab && czPreview.id === it.id;
       const b = el('button', 'cz-item' + (sel ? ' selected' : '') + (owned ? '' : ' locked') + (previewing ? ' previewing' : ''));
       b.title = it.name;
+      if (it.rarity) { b.classList.add('rarity'); b.style.setProperty('--rar', SHARED.RARITIES[it.rarity].color); }
       if (czTab === 'color') {
         const c = Draw.col(it.id);
         b.style.background = `linear-gradient(160deg, ${c.body}, ${c.shade})`;
@@ -182,7 +201,8 @@ const UI = (() => {
         const prof = { ...App.profile, [czTab]: it.id };
         b.appendChild(portraitCanvas(prof, 72, czTab === 'pet' ? { petOnly: true } : {}));
         b.appendChild(el('small', '', esc(it.name)));
-        b.appendChild(el('span', 'cz-price ' + (owned ? (it.price ? 'owned' : 'free') : ''), owned ? (it.price ? '✓' : 'FREE') : `🍪 ${it.price}`));
+        if (it.rarity) b.appendChild(el('span', 'cz-price rar', owned ? `✓ ${SHARED.RARITIES[it.rarity].name}` : `🎁 ${SHARED.RARITIES[it.rarity].name}`));
+        else b.appendChild(el('span', 'cz-price ' + (owned ? (it.price ? 'owned' : 'free') : ''), owned ? (it.price ? '✓' : 'FREE') : `🍪 ${it.price}`));
       }
       b.onclick = () => {
         if (owned) { czPreview = null; App.setProfile({ [czTab]: it.id }); }
@@ -196,12 +216,109 @@ const UI = (() => {
     box.classList.toggle('hidden', !czPreview);
     if (czPreview) {
       const it = SHARED.COSMETIC_BY_ID[czPreview.cat][czPreview.id];
-      const afford = Wallet.cookies >= it.price;
-      $('cz-buy-name').innerHTML = `<b>${esc(it.name)}</b>`;
-      $('cz-buy').disabled = !afford;
-      $('cz-buy').textContent = afford ? `Buy for 🍪 ${it.price}` : `Need 🍪 ${it.price - Wallet.cookies} more`;
+      $('cz-buy-name').innerHTML = `<b>${esc(it.name)}</b>` + (it.rarity ? ` <span style="color:${SHARED.RARITIES[it.rarity].color}">${SHARED.RARITIES[it.rarity].name}</span>` : '');
+      if (it.price == null) {
+        $('cz-buy').disabled = true;
+        $('cz-buy').textContent = '🎁 Only from Mystery Boxes';
+      } else {
+        const afford = Wallet.cookies >= it.price;
+        $('cz-buy').disabled = !afford;
+        $('cz-buy').textContent = afford ? `Buy for 🍪 ${it.price}` : `Need 🍪 ${it.price - Wallet.cookies} more`;
+      }
     }
   }
+
+  // ------------------------------------------------------------------ mystery boxes
+  function renderBoxTab(grid) {
+    const B = SHARED.BOX, RAR = SHARED.RARITIES;
+    const owned = SHARED.BOX_POOL.filter((x) => Wallet.owns(x.cat, x.item.id)).length;
+    const panel = el('div', 'box-panel');
+    panel.innerHTML = `
+      <div class="box-hero"><div class="box-art">🎁</div>
+        <div><h3>Mystery Box</h3><p class="muted">Win one of ${SHARED.BOX_POOL.length} exclusive items you can't buy anywhere. Duplicates give back 🍪 ${B.duplicateRefund}.</p>
+        <div class="box-odds">${Object.values(RAR).map((r) => `<span style="--rar:${r.color}">${r.name} ${r.chance}%</span>`).join('')}</div></div></div>`;
+    const btn = el('button', 'btn primary big box-open', Wallet.cookies >= B.price ? `Open for 🍪 ${B.price}` : `Need 🍪 ${B.price - Wallet.cookies} more`);
+    btn.disabled = Wallet.cookies < B.price;
+    btn.onclick = () => openBox();
+    panel.querySelector('.box-hero > div:last-child').appendChild(btn);
+    panel.appendChild(el('div', 'box-loot-head', `Possible loot <span class="muted">${owned} / ${SHARED.BOX_POOL.length} collected</span>`));
+    const loot = el('div', 'box-loot');
+    for (const r of ['mythic', 'legendary', 'epic', 'rare']) {
+      for (const x of SHARED.BOX_POOL.filter((y) => y.item.rarity === r)) loot.appendChild(lootCard(x, Wallet.owns(x.cat, x.item.id)));
+    }
+    panel.appendChild(loot);
+    grid.appendChild(panel);
+  }
+
+  function lootCard(x, owned, size = 72) {
+    const r = SHARED.RARITIES[x.item.rarity];
+    const card = el('div', 'loot-card' + (owned === false ? ' unowned' : ''));
+    card.style.setProperty('--rar', r.color);
+    const prof = { ...App.profile, [x.cat]: x.item.id };
+    card.appendChild(portraitCanvas(prof, size, x.cat === 'pet' ? { petOnly: true } : {}));
+    card.appendChild(el('small', '', esc(x.item.name)));
+    card.appendChild(el('span', 'loot-rar', owned ? '✓ ' + r.name : r.name));
+    return card;
+  }
+
+  function openBox() {
+    const win = Wallet.openBox();
+    if (!win) { Sfx.bad(); return; }
+    const ov = $('box-overlay');
+    ov.innerHTML = '';
+    ov.classList.remove('hidden');
+    const W = 132, WIN_AT = 48;
+    const wrap = el('div', 'roll-wrap');
+    const strip = el('div', 'roll-strip');
+    for (let i = 0; i < WIN_AT + 6; i++) strip.appendChild(lootCard(i === WIN_AT ? win : SHARED.rollBox(), null, 96));
+    wrap.append(strip, el('div', 'roll-marker'));
+    ov.append(el('div', 'roll-title', 'Opening Mystery Box…'), wrap);
+    const center = wrap.clientWidth / 2;
+    const target = WIN_AT * W + W / 2 - center + (Math.random() - 0.5) * (W * 0.7);
+    let lastCard = -1;
+    const tick = () => {
+      if (ov.classList.contains('hidden')) return;
+      const x = -new DOMMatrixReadOnly(getComputedStyle(strip).transform).m41;
+      const card = Math.floor((x + center) / W);
+      if (card !== lastCard) { lastCard = card; Sfx.beep(); }
+      if (!strip.dataset.done) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(() => {
+      strip.style.transition = 'transform 6.5s cubic-bezier(0.08, 0.62, 0.1, 1)';
+      strip.style.transform = `translateX(${-target}px)`;
+      requestAnimationFrame(tick);
+    });
+    const reveal = () => {
+      if (strip.dataset.done) return;
+      strip.dataset.done = '1';
+      const r = SHARED.RARITIES[win.item.rarity];
+      const box = el('div', 'roll-reveal');
+      box.style.setProperty('--rar', r.color);
+      box.appendChild(el('div', 'rr-rarity', r.name));
+      box.appendChild(lootCard(win, true, 150));
+      box.appendChild(el('div', 'rr-note', win.dup ? `Duplicate! You got 🍪 ${SHARED.BOX.duplicateRefund} back.` : 'New item unlocked!'));
+      const row = el('div', 'rr-actions');
+      if (!win.dup || App.profile[win.cat] !== win.item.id) {
+        const eq = el('button', 'btn primary', 'Equip');
+        eq.onclick = () => { App.setProfile({ [win.cat]: win.item.id }); closeBox(); };
+        row.appendChild(eq);
+      }
+      const again = el('button', 'btn', `Open another (🍪 ${SHARED.BOX.price})`);
+      again.disabled = Wallet.cookies < SHARED.BOX.price;
+      again.onclick = () => openBox();
+      const close = el('button', 'btn ghost', 'Close');
+      close.onclick = closeBox;
+      row.append(again, close);
+      box.appendChild(row);
+      ov.appendChild(box);
+      win.item.rarity === 'mythic' || win.item.rarity === 'legendary' ? Sfx.win() : Sfx.good();
+    };
+    strip.addEventListener('transitionend', reveal);
+    setTimeout(reveal, 7200);
+    // Click to skip the spin.
+    wrap.onclick = () => { strip.style.transition = 'none'; strip.style.transform = `translateX(${-target}px)`; reveal(); };
+  }
+  function closeBox() { $('box-overlay').classList.add('hidden'); $('box-overlay').innerHTML = ''; renderCzGrid(); }
 
   // ------------------------------------------------------------------ settings
   function openSettings() {

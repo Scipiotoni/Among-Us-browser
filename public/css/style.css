@@ -368,3 +368,50 @@ body.crit #hud-top-left #task-list { border: 2px solid var(--bad); }
 .acct-form .btn { margin-top: 6px; }
 #acct-status { min-height: 20px; text-align: center; }
 .acct-note { font-size: 12px; margin-top: 12px; }
+
+/* ===================== MYSTERY BOXES */
+.cz-tab.box-tab { background: linear-gradient(180deg, #7a3fd1, #4b1f8e); border-color: #b48cff; }
+.cz-tab.box-tab.active { background: linear-gradient(180deg, #b48cff, #7a3fd1); color: #fff; }
+.cz-item.rarity { border-color: var(--rar); box-shadow: inset 0 0 14px color-mix(in srgb, var(--rar) 35%, transparent); }
+.cz-price.rar { color: var(--rar); }
+#cz-grid.box-mode { display: block; }
+.box-panel { display: flex; flex-direction: column; gap: 10px; }
+.box-hero { display: flex; gap: 16px; align-items: center; background: linear-gradient(135deg, #2b1650, #12172b); border: 2px solid #7a3fd1; border-radius: 14px; padding: 14px; }
+.box-hero h3 { margin: 0 0 4px; font-size: 22px; }
+.box-hero p { margin: 0 0 8px; }
+.box-art { font-size: 72px; animation: boxbob 1.6s ease-in-out infinite; filter: drop-shadow(0 0 16px #b48cff); }
+@keyframes boxbob { 50% { transform: translateY(-6px) rotate(-4deg); } }
+.box-odds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.box-odds span { border: 2px solid var(--rar); color: var(--rar); border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: bold; }
+.box-open { background: linear-gradient(180deg, #b48cff, #7a3fd1) !important; border-color: #d9c4ff !important; }
+.box-loot-head { font-weight: bold; display: flex; justify-content: space-between; }
+.box-loot { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.loot-card { --rar: #3498db; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--rar) 40%, #0d1222), #0d1222 75%); border: 3px solid var(--rar); border-radius: 12px; padding: 6px 4px; text-align: center; min-height: 110px; }
+.loot-card small { font-size: 11px; color: #eef2ff; }
+.loot-rar { font-size: 11px; font-weight: bold; color: var(--rar); text-transform: uppercase; letter-spacing: .5px; }
+.loot-card.unowned canvas { filter: brightness(.55) saturate(.6); }
+#box-overlay { position: fixed; inset: 0; z-index: 150; background: radial-gradient(ellipse at center, rgba(60,25,110,.96), rgba(5,5,15,.98)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 16px; }
+.roll-title { font-size: 26px; font-weight: bold; letter-spacing: 1px; }
+.roll-wrap { position: relative; width: min(860px, 100%); height: 150px; overflow: hidden; border: 3px solid #b48cff; border-radius: 14px; background: #0a0d18; cursor: pointer; }
+.roll-strip { display: flex; position: absolute; left: 0; top: 10px; will-change: transform; }
+.roll-strip .loot-card { width: 124px; height: 128px; margin: 0 4px; flex-shrink: 0; }
+.roll-marker { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: #ffd32a; box-shadow: 0 0 14px #ffd32a; }
+.roll-marker::before, .roll-marker::after { content: ''; position: absolute; left: -8px; border: 10px solid transparent; }
+.roll-marker::before { top: -2px; border-top-color: #ffd32a; }
+.roll-marker::after { bottom: -2px; border-bottom-color: #ffd32a; }
+.roll-reveal { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: zoom .45s; }
+.roll-reveal .loot-card { width: 210px; min-height: 230px; box-shadow: 0 0 50px var(--rar); }
+.roll-reveal .loot-card small { font-size: 18px; font-weight: bold; }
+.rr-rarity { font-size: 40px; font-weight: bold; color: var(--rar); text-shadow: 0 0 20px var(--rar); text-transform: uppercase; letter-spacing: 3px; }
+.rr-note { color: #ddd; }
+.rr-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* ===================== HIDE TAB */
+.menu-row { display: flex; gap: 8px; }
+.menu-row .btn { flex: 1; }
+#cloak-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-top: 8px; }
+.cloak-item { display: flex; align-items: center; gap: 10px; background: #0d1222; border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--text); text-align: left; }
+.cloak-item img, .cloak-off { width: 28px; height: 28px; flex-shrink: 0; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+.cloak-item span { display: flex; flex-direction: column; min-width: 0; }
+.cloak-item small { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cloak-item.selected { border-color: var(--accent); box-shadow: 0 0 10px rgba(63,184,255,.5); }

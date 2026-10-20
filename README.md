@@ -14,6 +14,8 @@ No downloads for players: one person hosts the server and everyone else just ope
 - **Host & admins:** the host (👑) can promote admins (🛡), transfer host, kick, ban, mute, lock the lobby, change settings, and start or force-end games
 - **Walkable lobby** with a wardrobe and a settings terminal
 - **Customization & cookie shop:** 18 colors (unique per lobby), plus 137 cosmetics across hats, eyes, outfits and pets. Many are free; the rest cost 🍪 cookies.
+- **Mystery Boxes:** 🍪 150 each; a roulette spin wins one of 28 exclusive, unbuyable items (Rare 62%, Epic 27%, Legendary 9%, Mythic 2%). Duplicates refund 🍪 60.
+- **Hide tab:** disguise the browser tab's title and icon as Google Docs, Slides, Sheets, Drive, Classroom, Canva, Khan Academy, Quizlet or Wikipedia (generic icons drawn in code, not the real logos).
 - **Cookies:** earned at the end of every game: +2 per task step, +20 for winning, +4 per kill as an Impostor, +5 for playing (games over 1 minute). New players start with 50. Cookies and purchases are saved in each player's browser.
 - **Roles**
   - Crew: Crewmate, **Engineer** (vents), **Scientist** (portable vitals), **Tracker** (follow a player), **Noisemaker** (alerts everyone on death), **Guardian** (shields players after death), **Detective** (examines bodies to get two suspects)
@@ -81,5 +83,6 @@ public/js/ui.js     Menus, wardrobe, settings, admin panel, chat, meetings, over
 public/js/mqtt.js   Tiny MQTT client + background-safe timers
 public/js/net.js    Serverless multiplayer: hosting and joining lobbies over MQTT
 public/js/accounts.js Accounts (encrypted cloud saves) and the cookie wallet
+public/js/cloak.js  Hide tab (disguised title and icon)
 public/js/main.js   Event wiring and bootstrap
 ```

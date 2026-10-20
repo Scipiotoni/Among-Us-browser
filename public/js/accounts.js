@@ -229,13 +229,26 @@ const Wallet = (() => {
     owns(cat, id) { return cat === 'color' || this.price(cat, id) === 0 || data.owned.includes(`${cat}:${id}`); },
     buy(cat, id) {
       const price = this.price(cat, id);
-      if (this.owns(cat, id) || data.cookies < price) return false;
+      if (price == null || this.owns(cat, id) || data.cookies < price) return false;
       data.cookies -= price;
       data.owned.push(`${cat}:${id}`);
       persist();
       return true;
     },
     add(n) { if (n > 0) { data.cookies += n; persist(); } },
+    // Opens a Mystery Box: the prize is decided (and saved) right away; the roulette only shows it.
+    openBox() {
+      const B = SHARED.BOX;
+      if (data.cookies < B.price) return null;
+      data.cookies -= B.price;
+      const win = SHARED.rollBox();
+      const key = `${win.cat}:${win.item.id}`;
+      const dup = data.owned.includes(key);
+      if (dup) data.cookies += B.duplicateRefund;
+      else data.owned.push(key);
+      persist();
+      return { ...win, dup };
+    },
     onChange(f) { listeners.push(f); },
   };
 })();
